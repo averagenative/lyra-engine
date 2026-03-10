@@ -13,7 +13,7 @@ A file-based lyrics and style reference engine in markdown, built for AI agents.
 ## Setup
 
 ```bash
-git clone <repo-url> lyra-engine
+gh repo clone averagenative/lyra-engine
 cd lyra-engine
 python3 -m venv .venv
 source .venv/bin/activate

@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
-from textual.widgets import Footer, Header, Input, Label, ListItem, ListView, Static
+from textual.widgets import Footer, Header, Input, Label, ListItem, ListView, Static, TextArea
 
 from config import DATABASE_ROOT, PROJECT_ROOT
 from markdown import read_md
@@ -145,15 +145,16 @@ def copy_to_clipboard(text: str) -> bool:
 class PromptPreview(Static):
     """Live prompt preview with char/word counts and action hints."""
 
-    def update_preview(self, prompt: str, selections: dict) -> None:
+    def update_preview(self, prompt: str, lyrics: str, selections: dict) -> None:
         char_count = len(prompt)
         word_count = len(prompt.split()) if prompt.strip() else 0
+        lyrics_lines = len([l for l in lyrics.strip().splitlines() if l.strip()]) if lyrics.strip() else 0
 
         char_color = "green" if char_count <= SUNO_CHAR_LIMIT else "red"
         word_color = "green" if word_count <= SUNO_WORD_LIMIT else "red"
 
         lines = [
-            "[bold underline]Suno Style Prompt[/bold underline]",
+            "[bold underline]Style Prompt[/bold underline]",
             "",
             f"[{char_color}]{char_count}[/{char_color}]/{SUNO_CHAR_LIMIT} chars  |  "
             f"[{word_color}]{word_count}[/{word_color}]/{SUNO_WORD_LIMIT} words",
@@ -175,24 +176,44 @@ class PromptPreview(Static):
             lines.append(prompt)
         else:
             lines.append(
-                "[dim]Select artists/albums from the left panel, then\n"
-                "adjust genre, mood, and other fields below.\n\n"
-                "The prompt auto-builds from your selections + fields.[/dim]"
+                "[dim]Select artists from the left, then adjust fields.\n"
+                "The style prompt auto-builds from your selections.[/dim]"
+            )
+
+        # Lyrics preview
+        lines.append("")
+        lines.append("[dim]" + "\u2500" * 48 + "[/dim]")
+        lines.append("")
+        lines.append(f"[bold underline]Lyrics[/bold underline]  [dim]({lyrics_lines} lines)[/dim]")
+        lines.append("")
+
+        if lyrics.strip():
+            # Show first ~20 lines of lyrics in preview
+            preview_lines = lyrics.strip().splitlines()[:20]
+            for l in preview_lines:
+                lines.append(l)
+            if len(lyrics.strip().splitlines()) > 20:
+                lines.append(f"[dim]... ({len(lyrics.strip().splitlines()) - 20} more lines)[/dim]")
+        else:
+            lines.append(
+                "[dim]No lyrics yet. Write in the Lyrics field, or generate with:\n\n"
+                "  claude \"Write lyrics blending [artist] and [artist],\n"
+                "  mood: dark, structure: verse-chorus-bridge\"[/dim]"
             )
 
         lines.append("")
         lines.append("[dim]" + "\u2500" * 48 + "[/dim]")
         lines.append("")
         lines.append(
-            "[bold cyan]c[/bold cyan] Copy to clipboard    "
+            "[bold cyan]c[/bold cyan] Copy prompt    "
             "[bold cyan]e[/bold cyan] Save to generated_prompts/    "
-            "[bold cyan]x[/bold cyan] Clear all    "
+            "[bold cyan]x[/bold cyan] Clear    "
             "[bold cyan]q[/bold cyan] Quit"
         )
         lines.append("")
         lines.append(
-            "[dim]Copy puts the prompt text on your clipboard for pasting into Suno.\n"
-            "Save writes a timestamped file to generated_prompts/ with the prompt + your settings.[/dim]"
+            "[dim]Copy puts the style prompt on your clipboard.\n"
+            "Save writes style prompt + lyrics together to a .md file.[/dim]"
         )
 
         self.update("\n".join(lines))
@@ -305,6 +326,11 @@ class SunoBuilderApp(App):
     Input {
         margin-bottom: 0;
     }
+    #lyrics-input {
+        height: 16;
+        min-height: 8;
+        margin-top: 1;
+    }
 
     /* Right: preview */
     #preview-panel {
@@ -401,6 +427,18 @@ class SunoBuilderApp(App):
 
                     yield FieldLabel("[bold]Production[/bold]", classes="field-label")
                     yield Input(placeholder="e.g. lo-fi texture, 95 BPM, warm analog", id="production-input")
+
+                    yield FieldLabel("[bold]Lyrics[/bold]", classes="field-label")
+                    yield Label(
+                        "[dim]Write or paste lyrics below. Use an AI agent to generate:\n"
+                        "  claude \"Write lyrics in the style of [selected artists]\"[/dim]",
+                        classes="field-hint",
+                    )
+                    yield TextArea(id="lyrics-input")
+                    yield Label(
+                        "[dim]Tip: blank line = section break. [Verse], [Chorus] etc. are optional Suno tags.[/dim]",
+                        classes="field-hint",
+                    )
 
             # Right: live preview
             with VerticalScroll(id="preview-panel"):
@@ -586,8 +624,9 @@ class SunoBuilderApp(App):
 
     def _refresh_preview(self) -> None:
         prompt = self._build_prompt()
+        lyrics = self.query_one("#lyrics-input", TextArea).text
         selections = self._get_selections_summary()
-        self.query_one("#prompt-preview", PromptPreview).update_preview(prompt, selections)
+        self.query_one("#prompt-preview", PromptPreview).update_preview(prompt, lyrics, selections)
 
     # -- Events --------------------------------------------------------------
 
@@ -618,6 +657,9 @@ class SunoBuilderApp(App):
         # Any form field change -> refresh preview
         self._refresh_preview()
 
+    def on_text_area_changed(self, event: TextArea.Changed) -> None:
+        self._refresh_preview()
+
     def action_go_back(self) -> None:
         if self._browser_level == "albums":
             self._populate_artist_browser(self.query_one("#browser-filter", Input).value.strip())
@@ -626,7 +668,7 @@ class SunoBuilderApp(App):
     # -- Key bindings --------------------------------------------------------
 
     def _is_input_focused(self) -> bool:
-        return isinstance(self.focused, Input)
+        return isinstance(self.focused, (Input, TextArea))
 
     def action_copy_prompt(self) -> None:
         if self._is_input_focused():
@@ -693,13 +735,36 @@ class SunoBuilderApp(App):
                 lines.append(f"- **{label}:** {val}")
         lines.append("")
 
-        lines.append("## Prompt")
+        lines.append("## Style Prompt")
         lines.append("")
-        lines.append("> Paste this into Suno's style prompt field:")
+        lines.append("> Paste this into Suno's **style prompt** field:")
         lines.append("")
         lines.append("```")
         lines.append(prompt)
         lines.append("```")
+        lines.append("")
+
+        # Lyrics section
+        lyrics = self.query_one("#lyrics-input", TextArea).text.strip()
+        lines.append("## Lyrics")
+        lines.append("")
+        if lyrics:
+            lines.append("> Paste this into Suno's **lyrics** field:")
+            lines.append("")
+            lines.append("```")
+            lines.append(lyrics)
+            lines.append("```")
+        else:
+            lines.append("_No lyrics written yet._")
+            lines.append("")
+            lines.append("Generate lyrics with an AI agent:")
+            lines.append("")
+            artist_names = ", ".join(a["name"] for a in self._selected_artists) or "your selected artists"
+            lines.append(f'```bash')
+            lines.append(f'claude "Write lyrics blending {artist_names}. '
+                        f'Genre: {self.query_one("#genre-input", Input).value.strip() or "..."}, '
+                        f'Mood: {self.query_one("#mood-input", Input).value.strip() or "..."}"')
+            lines.append("```")
         lines.append("")
 
         filepath.write_text("\n".join(lines), encoding="utf-8")
@@ -713,6 +778,7 @@ class SunoBuilderApp(App):
         self._selected_albums.clear()
         for widget in self.query(Input):
             widget.value = ""
+        self.query_one("#lyrics-input", TextArea).clear()
         self._populate_artist_browser()
         self.query_one(SelectionInfo).show_empty()
         self._refresh_preview()
