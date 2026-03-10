@@ -225,11 +225,36 @@ class HomeScreen(Static):
             "",
             f"[dim]{'─' * 58}[/dim]",
             "",
-            f"  [bold]Database[/bold]",
-            f"    Artists:  [bold]{stats['artists']}[/bold]",
-            f"    Songs:    [bold]{stats['songs']}[/bold]  ({pct} with lyrics)",
-            f"    Genres:   {genre_line}",
-            "",
+        ]
+
+        if stats["artists"] == 0:
+            # Empty database — guide the user
+            lines.extend([
+                "  [bold yellow]No artists in the database yet.[/bold yellow]",
+                "",
+                "  Get started by fetching some data from the terminal:",
+                "",
+                "    [bold cyan]python3 scripts/fetch.py artist \"Deftones\"[/bold cyan]",
+                "    [bold cyan]python3 scripts/fetch.py artist \"Crowbar\"[/bold cyan]",
+                "    [bold cyan]python3 scripts/fetch.py enrich --all[/bold cyan]",
+                "",
+                "  This pulls discography, lyrics, and genre/mood tags from",
+                "  MusicBrainz + Genius. Requires a GENIUS_API_TOKEN in .env",
+                "  (free — sign up at genius.com/api-clients).",
+                "",
+                "  Use [bold]--albums-only[/bold] to scaffold without lyrics (no API key needed).",
+                "",
+            ])
+        else:
+            lines.extend([
+                f"  [bold]Database[/bold]",
+                f"    Artists:  [bold]{stats['artists']}[/bold]",
+                f"    Songs:    [bold]{stats['songs']}[/bold]  ({pct} with lyrics)",
+                f"    Genres:   {genre_line}",
+                "",
+            ])
+
+        lines.extend([
             f"[dim]{'─' * 58}[/dim]",
             "",
             "  [bold]Quick Actions[/bold]",
@@ -252,7 +277,7 @@ class HomeScreen(Static):
             "",
             f"[dim]{'─' * 58}[/dim]",
             f"[dim]q quit  |  ? help  |  Tab between fields[/dim]",
-        ]
+        ])
         self.update("\n".join(lines))
 
 

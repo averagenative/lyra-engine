@@ -23,21 +23,21 @@ A file-based lyrics and style reference engine in markdown, optimized for AI/age
 - `musicbrainz_recording_id`, `genius_url` — source IDs
 
 ## Tooling
-- `python scripts/fetch.py artist "Band Name"` — fetch full discography + lyrics
-- `python scripts/fetch.py artist "Band Name" --albums-only` — scaffold only, no lyrics
-- `python scripts/fetch.py album "Band" "Album"` — fetch single album
-- `python scripts/fetch.py song "Song Title" --artist "Artist"` — fetch/update lyrics for a single song
-- `python scripts/fetch.py song "Song Title" --url "https://genius.com/..."` — fetch from specific URL
-- `python scripts/fetch.py missing` — list all songs with missing lyrics
-- `python scripts/fetch.py missing --retry` — retry fetching missing lyrics from Genius
-- `python scripts/fetch.py refresh-tags` — re-fetch MusicBrainz tags for all existing artists/albums/songs
-- `python scripts/fetch.py enrich "Artist"` — enrich songs with mood/style/energy/themes
-- `python scripts/fetch.py similar "Artist"` — find similar artists via MusicBrainz tags
-- `python scripts/fetch.py suggest` — analyze genre gaps and suggest new artists
-- `python scripts/fetch.py stats` — show database statistics (artists, songs, genres, moods)
-- `python scripts/fetch.py index` — regenerate root index (includes Genre Map + Shared Tags)
-- `python scripts/tui.py` — interactive TUI browser (press `s` for songwriting session)
-- `python scripts/suno_builder.py` — interactive Suno prompt builder with live preview
+- `python3 scripts/fetch.py artist "Band Name"` — fetch full discography + lyrics
+- `python3 scripts/fetch.py artist "Band Name" --albums-only` — scaffold only, no lyrics
+- `python3 scripts/fetch.py album "Band" "Album"` — fetch single album
+- `python3 scripts/fetch.py song "Song Title" --artist "Artist"` — fetch/update lyrics for a single song
+- `python3 scripts/fetch.py song "Song Title" --url "https://genius.com/..."` — fetch from specific URL
+- `python3 scripts/fetch.py missing` — list all songs with missing lyrics
+- `python3 scripts/fetch.py missing --retry` — retry fetching missing lyrics from Genius
+- `python3 scripts/fetch.py refresh-tags` — re-fetch MusicBrainz tags for all existing artists/albums/songs
+- `python3 scripts/fetch.py enrich "Artist"` — enrich songs with mood/style/energy/themes
+- `python3 scripts/fetch.py similar "Artist"` — find similar artists via MusicBrainz tags
+- `python3 scripts/fetch.py suggest` — analyze genre gaps and suggest new artists
+- `python3 scripts/fetch.py stats` — show database statistics (artists, songs, genres, moods)
+- `python3 scripts/fetch.py index` — regenerate root index (includes Genre Map + Shared Tags)
+- `python3 scripts/tui.py` — interactive TUI browser (press `s` for songwriting session)
+- `python3 scripts/suno_builder.py` — interactive Suno prompt builder with live preview
 - Requires: `GENIUS_API_TOKEN` env var, `pip install -r requirements.txt`
 
 ## Guides (for song creation)

@@ -39,72 +39,72 @@ echo 'GENIUS_API_TOKEN=your_token_here' > .env
 
 ```bash
 # Fetch full discography + lyrics for an artist
-python scripts/fetch.py artist "Deftones"
+python3 scripts/fetch.py artist "Deftones"
 
 # Scaffold albums/tracks only (no lyrics, no Genius API needed)
-python scripts/fetch.py artist "Deftones" --albums-only
+python3 scripts/fetch.py artist "Deftones" --albums-only
 
 # Fetch a single album
-python scripts/fetch.py album "Deftones" "White Pony"
+python3 scripts/fetch.py album "Deftones" "White Pony"
 
 # Include compilations, live albums, or singles
-python scripts/fetch.py artist "NIN" --include-live --include-compilations --include-singles
+python3 scripts/fetch.py artist "NIN" --include-live --include-compilations --include-singles
 ```
 
 ### Managing Lyrics
 
 ```bash
 # List all songs with missing lyrics
-python scripts/fetch.py missing
+python3 scripts/fetch.py missing
 
 # Filter to one artist
-python scripts/fetch.py missing --artist "Keelhaul"
+python3 scripts/fetch.py missing --artist "Keelhaul"
 
 # Retry fetching missing lyrics from Genius
-python scripts/fetch.py missing --retry
+python3 scripts/fetch.py missing --retry
 
 # Fetch/update a single song (search + Genius)
-python scripts/fetch.py song "Paranoid Android" --artist "Radiohead"
+python3 scripts/fetch.py song "Paranoid Android" --artist "Radiohead"
 
 # Provide a direct URL to scrape lyrics from
-python scripts/fetch.py song "Paranoid Android" --url "https://genius.com/..."
+python3 scripts/fetch.py song "Paranoid Android" --url "https://genius.com/..."
 ```
 
 ### Metadata & Discovery
 
 ```bash
 # Show database stats (artists, songs, genres, moods)
-python scripts/fetch.py stats
+python3 scripts/fetch.py stats
 
 # Re-fetch MusicBrainz tags for all existing data
-python scripts/fetch.py refresh-tags
+python3 scripts/fetch.py refresh-tags
 
 # Enrich songs with mood/style/energy/themes from lyrics analysis
-python scripts/fetch.py enrich "Sleep"           # one artist
-python scripts/fetch.py enrich --all             # all artists
-python scripts/fetch.py enrich "Sleep" --dry-run # preview only
+python3 scripts/fetch.py enrich "Sleep"           # one artist
+python3 scripts/fetch.py enrich --all             # all artists
+python3 scripts/fetch.py enrich "Sleep" --dry-run # preview only
 
 # Find similar artists via shared MusicBrainz tags
-python scripts/fetch.py similar "Crowbar"
+python3 scripts/fetch.py similar "Crowbar"
 
 # Analyze genre gaps and suggest new artists to add
-python scripts/fetch.py suggest
+python3 scripts/fetch.py suggest
 
 # Regenerate the root index
-python scripts/fetch.py index
+python3 scripts/fetch.py index
 ```
 
 ### Interactive Tools
 
 ```bash
 # Browse the database (artists → albums → tracks → lyrics)
-python scripts/tui.py
+python3 scripts/tui.py
 
 # Start a songwriting session from the TUI: press 's'
 # Export session notes: press 'e'
 
 # Build a Suno-compatible style prompt interactively
-python scripts/suno_builder.py
+python3 scripts/suno_builder.py
 # Live preview with char/word count, copy to clipboard: 'c', export: 'e'
 ```
 
@@ -154,12 +154,12 @@ Use the CLI to build the database, and the TUI to browse and create.
 
 ```bash
 # Build the database
-python scripts/fetch.py artist "Deftones"
-python scripts/fetch.py artist "Crowbar"
-python scripts/fetch.py enrich --all
+python3 scripts/fetch.py artist "Deftones"
+python3 scripts/fetch.py artist "Crowbar"
+python3 scripts/fetch.py enrich --all
 
 # Launch the TUI
-python scripts/tui.py
+python3 scripts/tui.py
 ```
 
 The TUI has a home screen with quick actions:
