@@ -59,19 +59,47 @@ The TUI has a home screen with quick actions:
 
 From the TUI or prompt builder, export your session/prompt, then paste directly into Suno.
 
-### 2. With an AI Agent (recommended for songwriting)
+### 2. With an AI Agent (recommended for songwriting + Suno)
 
-The database is designed as a reference library for AI coding agents. The agent reads the markdown files — lyrics, frontmatter metadata, style descriptions — and uses them to write original songs and generate Suno prompts.
+The database is designed as a reference library for AI coding agents. The agent reads the markdown files — lyrics, frontmatter metadata, style descriptions — and uses them to write original songs and generate Suno-ready output (style prompt + lyrics).
 
 ```bash
 # From the project root:
 claude                    # or opencode, or any agents.md-compatible tool
+```
 
-# Then ask things like:
-# "Write a song that blends Crowbar's sludge with Type O Negative's gothic theatricality"
-# "Generate a Suno prompt for something that sounds like 90s trip-hop meets doom metal"
-# "Show me all melancholic songs from the 2000s"
-# "Analyze Deftones' lyrical patterns across their discography"
+**Generate a complete song for Suno** — the agent writes both the style prompt and lyrics:
+
+```
+"Write a Suno-ready song that blends Crowbar's sludge with Type O Negative's
+gothic theatricality. Give me a style prompt and full lyrics."
+
+"I want something that sounds like 90s trip-hop meets doom metal — dark,
+slow, cinematic. Write me a style prompt under 200 words and lyrics
+with verse/chorus structure."
+
+"Write a song inspired by Deftones' White Pony era — dreamy but heavy,
+with whispered verses and a loud chorus. Output the Suno style prompt
+and lyrics separately so I can paste them in."
+```
+
+**Interactive mode** — let the agent interview you to nail the sound:
+
+```
+"Let's write a song together. Ask me questions about the mood, genre,
+and style I want, then generate the Suno prompt and lyrics."
+
+"I want to make something heavy but I'm not sure what direction. Walk me
+through the songwriting interview and pull reference material from the
+database as we go."
+```
+
+**Research and discovery:**
+
+```
+"What genres are in the database? Show me all melancholic songs from the 2000s"
+"Analyze Deftones' lyrical patterns across their discography"
+"Compare the vocal styles of Spiritbox and Norma Jean"
 ```
 
 The agent reads `CLAUDE.md` (or `AGENTS.md`) automatically and knows how to navigate the database, run the songwriting interview, and output Suno-ready prompts. Two specialized personas are available in `agents/`:
