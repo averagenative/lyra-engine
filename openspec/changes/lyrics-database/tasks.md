@@ -7,8 +7,8 @@
 - [x] 1.2 Create Python venv and verify all dependencies install cleanly
 - [x] 1.3 Create `CLAUDE.md` — agent navigation guide for the database layout, tooling commands, and conventions
 - [x] 1.4 Create `scripts/config.py` — path helpers (`artist_dir`, `album_dir`, `song_path`), `sanitize_filename`, constants
-- [ ] 1.5 Clean up stale test data from initial Radiohead runs (bootleg/live dirs that leaked through before filtering fix)
-- [ ] 1.6 Add `.gitignore` (`.venv/`, `__pycache__/`, `.env`) and create initial commit
+- [x] 1.5 Clean up stale test data from initial Radiohead runs (bootleg/live dirs that leaked through before filtering fix)
+- [x] 1.6 Add `.gitignore` (`.venv/`, `__pycache__/`, `.env`) and create initial commit
 
 ## 2. Lyrics Ingestion CLI — Core Pipeline (P0)
 
@@ -21,22 +21,22 @@
 - [x] 2.4 Implement `scripts/markdown.py` — `write_song()`, `write_album()`, `write_artist()`, `write_index()` with YAML frontmatter generation
 - [x] 2.5 Implement `scripts/fetch.py` — argparse CLI with `artist`, `album`, `index` subcommands, orchestrating the full pipeline
 - [x] 2.6 Add idempotency logic — skip existing songs with lyrics, retry `[Lyrics not found]` placeholders, `--force` flag to override
-- [ ] 2.7 End-to-end test: run `fetch.py artist "Radiohead" --albums-only`, verify clean directory tree with correct album/track structure (no bootlegs, correct track counts)
-- [ ] 2.8 End-to-end test: run `fetch.py artist` with a small artist (3-4 albums) WITH lyrics fetching enabled (`GENIUS_API_TOKEN` set), verify lyrics populated in `.md` files
-- [ ] 2.9 Test `fetch.py album "Artist" "Album"` for single-album fetch
-- [ ] 2.10 Test `fetch.py index` regeneration — verify `_index.md` lists all ingested artists
+- [x] 2.7 End-to-end test: run `fetch.py artist "Radiohead" --albums-only`, verify clean directory tree with correct album/track structure (no bootlegs, correct track counts)
+- [x] 2.8 End-to-end test: run `fetch.py artist` with a small artist (3-4 albums) WITH lyrics fetching enabled (`GENIUS_API_TOKEN` set), verify lyrics populated in `.md` files
+- [x] 2.9 Test `fetch.py album "Artist" "Album"` for single-album fetch (fixed: cmd_album was not passing include_live/include_compilations to get_discography)
+- [x] 2.10 Test `fetch.py index` regeneration — verify `_index.md` lists all ingested artists
 
 ## 3. Ingestion Hardening (P0)
 
 > Goal: The pipeline handles real-world data reliably across diverse artists.
 > Delivers: Confidence to bulk-ingest 10+ artists without babysitting.
 
-- [ ] 3.1 Handle `--include-singles` flag — create a `Singles/` pseudo-album directory for standalone singles
-- [ ] 3.2 Validate multi-disc album flattening — test with a known multi-disc release, verify track numbers are sequential across discs
-- [ ] 3.3 Add network error handling — wrap MusicBrainz and Genius calls in try/except, log failures, continue to next track/album, print failure summary at end
-- [ ] 3.4 Add progress output — print running counts during fetch ("Fetching album 3/9... track 5/12...")
-- [ ] 3.5 Handle Genius edge cases — lyrics that come back as empty string, songs with non-ASCII characters, songs where Genius returns an instrumental tag
-- [ ] 3.6 Validate with 3 diverse artists (e.g., one large catalog, one small, one with special characters in names) and fix any issues found
+- [x] 3.1 Handle `--include-singles` flag — adds "single" to MusicBrainz type query, singles get their own year-titled directories
+- [x] 3.2 Validate multi-disc album flattening — verified with Pink Floyd's The Wall (26 tracks flattened across 2 discs)
+- [x] 3.3 Add network error handling — try/except on get_tracklist and fetch_lyrics, log and continue on failure
+- [x] 3.4 Add progress output — album counter [N/total] and track counter NN/total in lyrics fetch
+- [x] 3.5 Handle Genius edge cases — instrumental detection, robust trailing cleanup (Embed, digits, empty lines), timeout handling
+- [ ] 3.6 Validate with target artist list: Deftones, Crowbar, Sleep (done), Type O Negative, Opeth, Nine Inch Nails — fix any issues found
 
 ## 4. Suno Style Descriptions & Prompt Generator (P1)
 

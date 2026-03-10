@@ -35,6 +35,8 @@ def cmd_artist(args):
 
     # Build type list based on flags
     types = ["album", "ep"]
+    if args.include_singles:
+        types.append("single")
 
     # Fetch discography
     discography = get_discography(
@@ -66,8 +68,8 @@ def cmd_artist(args):
     total_missing = 0
     total_skipped = 0
 
-    for album in discography:
-        print(f"\n--- {album['year']} - {album['title']} ---")
+    for album_idx, album in enumerate(discography, 1):
+        print(f"\n--- [{album_idx}/{len(discography)}] {album['year']} - {album['title']} ---")
 
         # Get track listing
         tracks = get_tracklist(album["release_group_id"])
@@ -93,7 +95,7 @@ def cmd_artist(args):
             genius_url = ""
 
             if not args.albums_only:
-                print(f"  {track['track_number']:2d}. {track['title']} ... ", end="", flush=True)
+                print(f"  {track['track_number']:2d}/{len(tracks)} {track['title']} ... ", end="", flush=True)
                 lyrics_text, genius_url = fetch_lyrics(name, track["title"])
                 if lyrics_text:
                     total_fetched += 1
@@ -142,9 +144,12 @@ def cmd_album(args):
     name = artist_info["name"]
     print(f"Found artist: {name}")
 
-    # Find the album in discography
-    types = ["album", "ep", "single", "compilation", "live"]
-    discography = get_discography(artist_info["id"], types=types)
+    # Find the album in discography — search broadly
+    types = ["album", "ep", "single"]
+    discography = get_discography(
+        artist_info["id"], types=types,
+        include_live=True, include_compilations=True,
+    )
 
     target = args.album.lower()
     match = None

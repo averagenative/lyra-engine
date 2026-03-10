@@ -95,28 +95,32 @@ def get_tracklist(release_group_id: str) -> list[dict]:
     Picks the first official release, flattens multi-disc into one sequence.
     Returns list of {track_number, title, recording_id, duration_ms}.
     """
-    # Get releases in this release group
-    result = musicbrainzngs.browse_releases(
-        release_group=release_group_id, release_type=["album", "ep"],
-        limit=10
-    )
-    releases = result.get("release-list", [])
-    if not releases:
-        # Try without type filter
+    try:
+        # Get releases in this release group
         result = musicbrainzngs.browse_releases(
-            release_group=release_group_id, limit=10
+            release_group=release_group_id, release_type=["album", "ep"],
+            limit=10
         )
         releases = result.get("release-list", [])
+        if not releases:
+            # Try without type filter
+            result = musicbrainzngs.browse_releases(
+                release_group=release_group_id, limit=10
+            )
+            releases = result.get("release-list", [])
 
-    if not releases:
-        print(f"No releases found for release group {release_group_id}", file=sys.stderr)
+        if not releases:
+            print(f"No releases found for release group {release_group_id}", file=sys.stderr)
+            return []
+
+        # Pick the first release and get its full details
+        release_id = releases[0]["id"]
+        release = musicbrainzngs.get_release_by_id(
+            release_id, includes=["recordings"]
+        )["release"]
+    except Exception as e:
+        print(f"Error fetching tracklist for {release_group_id}: {e}", file=sys.stderr)
         return []
-
-    # Pick the first release and get its full details
-    release_id = releases[0]["id"]
-    release = musicbrainzngs.get_release_by_id(
-        release_id, includes=["recordings"]
-    )["release"]
 
     tracks = []
     absolute_number = 0

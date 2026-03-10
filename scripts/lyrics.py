@@ -7,17 +7,30 @@ from difflib import SequenceMatcher
 
 import lyricsgenius
 
-from config import GENIUS_SLEEP_SECONDS, FUZZY_MATCH_THRESHOLD
+from config import DATABASE_ROOT, GENIUS_SLEEP_SECONDS, FUZZY_MATCH_THRESHOLD
 
 _genius = None
 
 
+def _load_dotenv():
+    """Load .env file from project root if it exists."""
+    env_path = DATABASE_ROOT / ".env"
+    if env_path.exists():
+        with open(env_path) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, _, value = line.partition("=")
+                    os.environ.setdefault(key.strip(), value.strip())
+
+
 def init_genius() -> lyricsgenius.Genius:
-    """Initialize the Genius client. Reads GENIUS_API_TOKEN from env."""
+    """Initialize the Genius client. Reads GENIUS_API_TOKEN from env or .env file."""
     global _genius
     if _genius is not None:
         return _genius
 
+    _load_dotenv()
     token = os.environ.get("GENIUS_API_TOKEN")
     if not token:
         print(
@@ -77,9 +90,17 @@ def fetch_lyrics(artist: str, title: str) -> tuple[str | None, str | None]:
         if lines and lines[0].strip().endswith("Lyrics"):
             lines = lines[1:]
         # Remove trailing "Embed" or number+Embed
-        if lines and ("Embed" in lines[-1]):
-            lines = lines[:-1]
+        while lines and ("Embed" in lines[-1] or lines[-1].strip() == ""):
+            lines.pop()
+        # Remove trailing digit-only lines (e.g., "123Embed" leaves "123")
+        while lines and lines[-1].strip().isdigit():
+            lines.pop()
         lyrics = "\n".join(lines).strip()
+
+        # Detect instrumentals
+        lyrics_lower = lyrics.lower().replace(" ", "")
+        if lyrics_lower in ("", "[instrumental]", "(instrumental)", "instrumental"):
+            lyrics = "[Instrumental]"
 
     time.sleep(GENIUS_SLEEP_SECONDS)
 
