@@ -53,20 +53,75 @@ ENERGY_OPTIONS = [
 
 # Word pools for title generation, keyed by mood/genre feel
 _TITLE_NOUNS = {
-    "dark": ["Shadows", "Ashes", "Void", "Abyss", "Eclipse", "Descent", "Hollow", "Ruin"],
-    "heavy": ["Iron", "Stone", "Weight", "Anvil", "Monolith", "Colossus", "Titan", "Fortress"],
-    "atmospheric": ["Haze", "Drift", "Fog", "Veil", "Horizon", "Canopy", "Static", "Ether"],
-    "melancholic": ["Echoes", "Ghosts", "Ruins", "Embers", "Fading", "Remains", "Whispers", "Dust"],
-    "aggressive": ["Teeth", "Wire", "Fracture", "Shrapnel", "Voltage", "Scorch", "Razor", "Breach"],
-    "dreamy": ["Lucid", "Mirage", "Reverie", "Prism", "Aurora", "Shimmer", "Halo", "Twilight"],
-    "defiant": ["Stand", "Unbroken", "Unyielding", "Sovereign", "Reclaim", "Resist", "Endure", "Rise"],
-    "doom": ["Tomb", "Dirge", "Pyre", "Requiem", "Vigil", "Shroud", "Lament", "Procession"],
-    "sludge": ["Mud", "Tar", "Crawl", "Undertow", "Swamp", "Grind", "Slab", "Trench"],
-    "industrial": ["Machine", "Signal", "Grid", "Circuit", "Rust", "Piston", "Conduit", "Compound"],
-    "gothic": ["Cathedral", "Midnight", "Crimson", "Velvet", "Thorns", "Crypt", "Manor", "Mourning"],
-    "trip hop": ["Smoke", "Pulse", "Nocturne", "Low", "Undercurrent", "Dissolve", "Submerge", "Beneath"],
+    # --- Dark / heavy / metal ---
+    "dark": ["Shadows", "Ashes", "Void", "Abyss", "Eclipse", "Descent", "Hollow", "Ruin", "Obsidian", "Undertow"],
+    "heavy": ["Iron", "Stone", "Weight", "Anvil", "Monolith", "Colossus", "Titan", "Fortress", "Hammer", "Burden"],
+    "aggressive": ["Teeth", "Wire", "Fracture", "Shrapnel", "Voltage", "Scorch", "Razor", "Breach", "Fist", "Wreckage"],
+    "doom": ["Tomb", "Dirge", "Pyre", "Requiem", "Vigil", "Shroud", "Lament", "Procession", "Eulogy", "Covenant"],
+    "sludge": ["Mud", "Tar", "Crawl", "Undertow", "Swamp", "Grind", "Slab", "Trench", "Mire", "Silt"],
+    "metal": ["Blade", "Forge", "Crucible", "Tempest", "Fury", "Siege", "Marrow", "Arsenal"],
+    "death metal": ["Carrion", "Viscera", "Bile", "Sepulcher", "Catacombs", "Plague", "Reckoning", "Decimation"],
+    "gothic": ["Cathedral", "Midnight", "Crimson", "Velvet", "Thorns", "Crypt", "Manor", "Mourning", "Garnet", "Masquerade"],
+    "industrial": ["Machine", "Signal", "Grid", "Circuit", "Rust", "Piston", "Conduit", "Compound", "Chrome", "Output"],
+    # --- Atmospheric / ambient / dreamy ---
+    "atmospheric": ["Haze", "Drift", "Fog", "Veil", "Horizon", "Canopy", "Static", "Ether", "Vapor", "Suspension"],
+    "dreamy": ["Lucid", "Mirage", "Reverie", "Prism", "Aurora", "Shimmer", "Halo", "Twilight", "Lullaby", "Daydream"],
+    "ambient": ["Stillness", "Orbit", "Wavelength", "Murmur", "Expanse", "Gradient", "Infinity", "Breathe"],
+    "ethereal": ["Gossamer", "Luminous", "Celestial", "Feather", "Mist", "Glow", "Wisp", "Iridescent"],
+    # --- Emotional / introspective ---
+    "melancholic": ["Echoes", "Ghosts", "Ruins", "Embers", "Fading", "Remains", "Whispers", "Dust", "Letters", "Photographs"],
+    "sad": ["Tears", "Rain", "Gray", "Silence", "Absence", "Longing", "Empty", "Goodbye", "Wilt", "Erosion"],
+    "vulnerable": ["Glass", "Paper", "Thread", "Wound", "Tender", "Bare", "Exposed", "Fragile", "Porcelain", "Thin"],
+    "introspective": ["Mirror", "Journal", "Question", "Inward", "Compass", "Reflection", "Memoir", "Retrospect"],
+    "nostalgic": ["Polaroid", "Summer", "Rewind", "Yesterday", "Hometown", "Porch", "Handwriting", "Cassette", "Memory", "Postcard"],
+    "mournful": ["Funeral", "Willow", "Elegy", "Departed", "Epitaph", "Wreath", "Vigil", "Wake"],
+    # --- Upbeat / bright / energetic ---
+    "happy": ["Sunshine", "Colors", "Bloom", "Fireworks", "Confetti", "Morning", "Joy", "Spark", "Dance", "Grin"],
+    "energetic": ["Rush", "Lightning", "Ignite", "Surge", "Blaze", "Momentum", "Stampede", "Launch", "Adrenaline", "Dynamo"],
+    "euphoric": ["Rapture", "Elation", "Summit", "Zenith", "Lift", "Soar", "Bliss", "Ecstasy", "Radiance", "Crescendo"],
+    "triumphant": ["Crown", "Victory", "Anthem", "Glory", "Banner", "Pinnacle", "Conquest", "Coronation"],
+    "playful": ["Trick", "Bounce", "Kaleidoscope", "Riddle", "Marble", "Carousel", "Mischief", "Bubblegum"],
+    "defiant": ["Stand", "Unbroken", "Unyielding", "Sovereign", "Reclaim", "Resist", "Endure", "Rise", "Revolt", "Never"],
+    # --- Genre-specific ---
+    "trip hop": ["Smoke", "Pulse", "Nocturne", "Low", "Undercurrent", "Dissolve", "Submerge", "Beneath", "Slow", "Opium"],
+    "electronic": ["Pixel", "Neon", "Synth", "Binary", "Glitch", "Waveform", "Upload", "Frequency", "Loop", "Interface"],
+    "pop": ["Heartbeat", "Kiss", "Tonight", "Spotlight", "Fever", "Sugar", "Electric", "Sway", "Crush", "Runway"],
+    "rock": ["Highway", "Fuse", "Volume", "Rebel", "Engine", "Concrete", "Rooftop", "Overdrive", "Amp", "Riot"],
+    "punk": ["Anarchy", "Sneer", "Spit", "Gutter", "Mohawk", "Cheap", "Revolt", "Noise", "Thrash", "Sellout"],
+    "folk": ["Meadow", "River", "Lantern", "Harvest", "Timber", "Wander", "Hearth", "Sparrow", "Fiddle", "Wayward"],
+    "country": ["Dust", "Gravel", "Pickup", "Sunset", "Bourbon", "Porch", "Holler", "Backroad", "Ridge", "Fence"],
+    "blues": ["Crossroads", "Whiskey", "Muddy", "Freight", "Lonesome", "Juke", "Ramble", "Devil", "Shade", "Bottleneck"],
+    "jazz": ["Midnight", "Velvet", "Satin", "Smoke", "Lounge", "Tempo", "Blue", "Brass", "Improvise", "Cool"],
+    "r&b": ["Silk", "Honey", "Body", "Heat", "Slow", "Touch", "Groove", "Flame", "Satin", "Whisper"],
+    "hip hop": ["Crown", "Cipher", "Block", "Gold", "Concrete", "Throne", "Hustle", "Empire", "Ink", "Verse"],
+    "soul": ["Heart", "Gospel", "Grace", "Testimony", "River", "Sunday", "Light", "Bridge", "Salvation", "Hallelujah"],
+    "classical": ["Opus", "Aria", "Sonata", "Allegro", "Nocturne", "Prelude", "Fugue", "Cadence"],
+    "reggae": ["Island", "Roots", "Zion", "Sunrise", "Freedom", "Tide", "Rhythm", "Easy", "Vibes", "Breeze"],
+    "latin": ["Fuego", "Luna", "Sangre", "Caliente", "Corazon", "Noche", "Alma", "Bailar", "Cielo", "Sol"],
+    "post-rock": ["Horizon", "Tides", "Expanse", "Plateau", "Continuum", "Atlas", "Glacier", "Skyline"],
+    "post-hardcore": ["Nerve", "Splinter", "Threshold", "Collapse", "Sever", "Unravel", "Tension", "Overflow"],
+    "shoegaze": ["Blur", "Swirl", "Haze", "Kaleidoscope", "Drown", "Soft", "Gauze", "Wash", "Petal", "Pastel"],
+    "emo": ["Diary", "Stitch", "November", "Basement", "Wound", "Crumble", "Sleepless", "Matchbook"],
+    "progressive": ["Labyrinth", "Odyssey", "Nexus", "Paradox", "Cipher", "Construct", "Epoch", "Axiom"],
+    "hardcore": ["Fist", "Wall", "Spite", "Lockjaw", "Severance", "Grit", "Backbone", "Gauntlet"],
+    "metalcore": ["Collapse", "Fracture", "Harden", "Divide", "Scarlet", "Override", "Deadweight", "Hollow"],
+    "noise rock": ["Feedback", "Distortion", "Abrasion", "Clatter", "Wreck", "Overload", "Gnarl", "Scrape"],
+    "stoner": ["Haze", "Dune", "Saturn", "Bong", "Desert", "Mammoth", "Cosmic", "Sabbath"],
+    # --- Nature / place ---
+    "peaceful": ["Garden", "Lake", "Breeze", "Meadow", "Sunrise", "Haven", "Harbor", "Clearing", "Calm", "Shore"],
+    "cold": ["Frost", "Winter", "Glacier", "Permafrost", "Tundra", "North", "Ice", "Pale"],
+    # --- Abstract / universal ---
+    "hopeful": ["Dawn", "Seed", "Bridge", "Horizon", "Tomorrow", "Light", "Open", "Begin", "Path", "Door"],
+    "restless": ["Pace", "Wander", "Insomnia", "Itch", "Roam", "Fugitive", "Nomad", "Trespass"],
+    "brooding": ["Storm", "Smolder", "Brood", "Undone", "Simmer", "Grudge", "Thorn", "Coil"],
+    "raw": ["Nerve", "Bone", "Blood", "Skin", "Gut", "Scar", "Sinew", "Marrow"],
+    "cathartic": ["Flood", "Release", "Purge", "Cleanse", "Catharsis", "Scream", "Exhale", "Break"],
 }
-_TITLE_DEFAULT = ["Hymn", "Signal", "Archive", "Threshold", "Monument", "Passage", "Resonance", "Fracture"]
+_TITLE_DEFAULT = [
+    "Hymn", "Signal", "Archive", "Threshold", "Monument", "Passage",
+    "Resonance", "Meridian", "Waypoint", "Anchor", "Bloom", "Vertigo",
+    "Undertone", "Silhouette", "Periphery", "Axiom", "Parallel", "Afterglow",
+]
 _TITLE_PATTERNS = [
     "{noun}",
     "The {noun}",
@@ -76,10 +131,30 @@ _TITLE_PATTERNS = [
     "No {noun}",
     "{noun} // {noun2}",
     "All This {noun}",
+    "{adj} {noun2}",
+    "Where the {noun} Goes",
+    "{noun} & {noun2}",
+    "Like a {noun}",
+    "After the {noun}",
+    "Before the {noun}",
+    "Dear {noun}",
+    "{noun} in the {noun2}",
+    "Half {adj}",
+    "Still {adj}",
+    "Almost {noun}",
+    "When {noun2} Falls",
 ]
 _TITLE_ADJS = [
+    # Dark / heavy
     "Concrete", "Hollow", "Burning", "Silent", "Broken", "Frozen", "Endless",
-    "Waking", "Feral", "Sunken", "Distant", "Last", "Buried", "Open",
+    "Feral", "Sunken", "Buried",
+    # Warm / bright
+    "Golden", "Warm", "Bright", "Wild", "Gentle", "Vivid", "Radiant", "Tender",
+    # Neutral / evocative
+    "Waking", "Distant", "Last", "Open", "Slow", "Lost", "Strange", "Lonesome",
+    "Restless", "Quiet", "Crooked", "Paper", "Velvet", "Copper", "Neon",
+    "Borrowed", "Tangled", "Honest", "Bitter", "Sweet", "Heavy", "Weightless",
+    "Electric", "Acoustic", "Midnight", "Sunday", "Northern", "Southern",
 ]
 
 
