@@ -112,6 +112,166 @@ def fetch_lyrics(artist: str, title: str) -> tuple[str | None, str | None]:
     return lyrics or None, song.url
 
 
+def _slugify_for_azlyrics(text: str) -> str:
+    """Convert text to AZLyrics URL slug: lowercase, no spaces/special chars."""
+    import re
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9]", "", text)
+    return text
+
+
+def scrape_lyrics_from_url(url: str) -> str | None:
+    """Generic lyrics scraper that works with common lyrics sites.
+
+    Supports AZLyrics, MetroLyrics, and other sites with common patterns.
+    For Genius URLs, delegates to fetch_lyrics_from_url.
+    For Musixmatch, skips gracefully (they block scraping).
+
+    Returns cleaned lyrics text or None.
+    """
+    import re
+    import requests
+    from bs4 import BeautifulSoup, Comment
+
+    # Redirect Genius URLs to the dedicated function
+    if "genius.com" in url:
+        return fetch_lyrics_from_url(url)
+
+    # Musixmatch blocks scraping — skip gracefully
+    if "musixmatch.com" in url:
+        print("  Musixmatch blocks scraping, skipping.", file=sys.stderr)
+        return None
+
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        )
+    }
+
+    try:
+        page = requests.get(url, headers=headers, timeout=15)
+        if page.status_code != 200:
+            return None
+        soup = BeautifulSoup(page.text, "html.parser")
+    except Exception as e:
+        print(f"  Error fetching URL: {e}", file=sys.stderr)
+        return None
+
+    lyrics_text = None
+
+    # AZLyrics: div with no class after the specific comment
+    if "azlyrics.com" in url:
+        comments = soup.find_all(string=lambda text: isinstance(text, Comment)
+                                 and "azlyrics.com content" in text.lower())
+        if comments:
+            # The lyrics div is the next sibling div after the comment
+            comment = comments[0]
+            lyrics_div = comment.find_next("div")
+            if lyrics_div:
+                lyrics_text = lyrics_div.get_text(separator="\n")
+        if not lyrics_text:
+            # Fallback: look for the main lyrics div by structure
+            ringtone = soup.find("div", class_="ringtone")
+            if ringtone:
+                lyrics_div = ringtone.find_next_sibling("div")
+                if lyrics_div and not lyrics_div.get("class"):
+                    lyrics_text = lyrics_div.get_text(separator="\n")
+
+    # MetroLyrics: <div id="lyrics-body-text">
+    elif "metrolyrics.com" in url:
+        container = soup.find("div", id="lyrics-body-text")
+        if container:
+            lyrics_text = container.get_text(separator="\n")
+
+    # Generic fallback: look for elements with class/id containing "lyrics" or "songtext"
+    if not lyrics_text:
+        for attr in ["id", "class"]:
+            for keyword in ["lyrics", "songtext"]:
+                candidates = soup.find_all(
+                    lambda tag: tag.name in ("div", "section", "pre")
+                    and tag.get(attr)
+                    and keyword in (
+                        " ".join(tag[attr]) if isinstance(tag[attr], list)
+                        else str(tag[attr])
+                    ).lower()
+                )
+                # Pick the largest candidate by text length
+                for candidate in candidates:
+                    text = candidate.get_text(separator="\n")
+                    if text and len(text) > 50:
+                        if not lyrics_text or len(text) > len(lyrics_text):
+                            lyrics_text = text
+
+    if not lyrics_text:
+        return None
+
+    # Clean the result
+    lines = lyrics_text.split("\n")
+    cleaned_lines = []
+    for line in lines:
+        line = line.strip()
+        # Skip common ad/header junk
+        if any(junk in line.lower() for junk in [
+            "submit corrections", "writer(s):", "lyrics licensed",
+            "lyrics provided by", "lyrics powered by",
+            "unfortunately, we are not licensed",
+        ]):
+            continue
+        cleaned_lines.append(line)
+
+    # Normalize: collapse multiple blank lines into one
+    result_lines = []
+    prev_blank = False
+    for line in cleaned_lines:
+        if not line:
+            if not prev_blank:
+                result_lines.append("")
+            prev_blank = True
+        else:
+            result_lines.append(line)
+            prev_blank = False
+
+    result = "\n".join(result_lines).strip()
+    return result if len(result) > 20 else None
+
+
+def web_search_lyrics(artist: str, title: str) -> str | None:
+    """Search for lyrics using predictable URL patterns on common lyrics sites.
+
+    Tries AZLyrics as a best-effort fallback when Genius fails.
+    Returns cleaned lyrics text or None.
+    """
+    # Try AZLyrics: https://www.azlyrics.com/lyrics/{artist_slug}/{title_slug}.html
+    artist_slug = _slugify_for_azlyrics(artist)
+    title_slug = _slugify_for_azlyrics(title)
+
+    if not artist_slug or not title_slug:
+        return None
+
+    # Strip leading "the" from artist for AZLyrics convention
+    if artist_slug.startswith("the"):
+        artist_slug_nothe = artist_slug[3:]
+    else:
+        artist_slug_nothe = None
+
+    urls_to_try = [
+        f"https://www.azlyrics.com/lyrics/{artist_slug}/{title_slug}.html",
+    ]
+    if artist_slug_nothe:
+        urls_to_try.append(
+            f"https://www.azlyrics.com/lyrics/{artist_slug_nothe}/{title_slug}.html"
+        )
+
+    for url in urls_to_try:
+        lyrics = scrape_lyrics_from_url(url)
+        if lyrics:
+            return lyrics
+
+    return None
+
+
 def fetch_lyrics_from_url(url: str) -> str | None:
     """Scrape lyrics from a Genius URL directly.
 

@@ -128,4 +128,4 @@
 - [ ] 10.2 Add AllMusic scraper to ingestion pipeline — **deferred** (no reliable API/scraping path)
 - [ ] 10.3 Add album review summaries from AllMusic to `_album.md` — **deferred** (depends on 10.2)
 - [x] 10.4 Evaluate Discogs API — **viable**. Free public API with OAuth (discogs.com/developers). Provides genres, styles, tracklists, label info, artist profiles. Rate limit: 60 req/min authenticated.
-- [ ] 10.5 Add lyrics URL fallback — when Genius fails, search alternative lyrics sites (AZLyrics, MetroLyrics) via web search
+- [x] 10.5 Add lyrics URL fallback — `web_search_lyrics()` tries AZLyrics URL patterns, `scrape_lyrics_from_url()` handles AZLyrics/MetroLyrics/generic sites. Auto-triggered in `cmd_song` and `cmd_missing --retry`.

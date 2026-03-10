@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from config import artist_dir, album_dir, song_path
 from musicbrainz import search_artist, get_discography, get_tracklist, get_release_group_tags, get_recording_tags, get_artist_relationships
 from markdown import write_song, write_album, write_artist, write_index, read_md, update_tags
-from lyrics import fetch_lyrics, fetch_lyrics_from_url, init_genius
+from lyrics import fetch_lyrics, fetch_lyrics_from_url, init_genius, web_search_lyrics
 
 
 def has_lyrics(path):
@@ -419,9 +419,17 @@ def cmd_song(args):
             _write_md(song_file, fm, lyrics)
             print(f"Updated with lyrics from Genius ({len(lyrics)} chars)")
         else:
-            print(f"Not found on Genius. Try:")
-            print(f"  --url <genius-url>   Provide a direct URL")
-            print(f"  --paste              Paste lyrics from stdin")
+            # Try fallback sources
+            print("Not found on Genius. Trying fallback sources...")
+            lyrics = web_search_lyrics(artist, title)
+            if lyrics:
+                from markdown import _write_md
+                _write_md(song_file, fm, lyrics)
+                print(f"Updated with lyrics from fallback ({len(lyrics)} chars)")
+            else:
+                print(f"Not found on any source. Try:")
+                print(f"  --url <url>          Provide a direct lyrics URL")
+                print(f"  --paste              Paste lyrics from stdin")
 
 
 def cmd_missing(args):
@@ -477,7 +485,16 @@ def cmd_missing(args):
                 found += 1
                 print("OK")
             else:
-                print("still missing")
+                # Try fallback sources
+                print("not on Genius, trying fallback sources...", end=" ", flush=True)
+                lyrics = web_search_lyrics(artist, title)
+                if lyrics:
+                    from markdown import _write_md
+                    _write_md(song_file, fm, lyrics)
+                    found += 1
+                    print("OK (fallback)")
+                else:
+                    print("still missing")
         print(f"\nRetry complete: {found}/{len(missing)} found")
 
 
@@ -757,6 +774,80 @@ def cmd_suggest(args):
     print(f"Total suggestions: {suggestions_found}")
 
 
+def cmd_discogs(args):
+    """Fetch Discogs data and enrich existing _artist.md."""
+    from discogs import get_artist_info
+    from markdown import _write_md
+
+    name = args.name
+    adir = artist_dir(name)
+    artist_file = adir / "_artist.md"
+
+    # Find existing artist file (try case-insensitive match)
+    if not artist_file.exists():
+        from config import DATABASE_ROOT
+        found = False
+        for entry in DATABASE_ROOT.iterdir():
+            if entry.is_dir() and (entry / "_artist.md").exists():
+                fm, _ = read_md(entry / "_artist.md")
+                if fm.get("name", "").lower() == name.lower():
+                    adir = entry
+                    artist_file = entry / "_artist.md"
+                    found = True
+                    break
+        if not found:
+            print(f"Error: No existing artist file found for '{name}'.", file=sys.stderr)
+            print("Run 'fetch.py artist' first to create the artist.", file=sys.stderr)
+            sys.exit(1)
+
+    print(f"Fetching Discogs data for '{name}'...")
+    info = get_artist_info(name)
+    if not info:
+        print("Could not find artist on Discogs.", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"  Discogs match: {info['name']} (id: {info['id']})")
+    print(f"  Discogs URL:   {info['uri']}")
+    if info["genres"]:
+        print(f"  Genres:        {', '.join(info['genres'])}")
+    if info["styles"]:
+        print(f"  Styles:        {', '.join(info['styles'])}")
+    if info["profile"]:
+        profile_preview = info["profile"][:120]
+        if len(info["profile"]) > 120:
+            profile_preview += "..."
+        print(f"  Profile:       {profile_preview}")
+
+    # Read existing frontmatter and body
+    fm, body = read_md(artist_file)
+    if not fm:
+        print(f"Error: Could not parse frontmatter in {artist_file}", file=sys.stderr)
+        sys.exit(1)
+
+    # Update frontmatter with Discogs data
+    updated = []
+    if info["profile"]:
+        fm["discogs_profile"] = info["profile"]
+        updated.append("discogs_profile")
+    if info["styles"]:
+        fm["discogs_styles"] = info["styles"]
+        updated.append("discogs_styles")
+    if info["uri"]:
+        fm["discogs_url"] = info["uri"]
+        updated.append("discogs_url")
+    if info["genres"]:
+        fm["discogs_genres"] = info["genres"]
+        updated.append("discogs_genres")
+
+    if updated:
+        _write_md(artist_file, fm, body)
+        print(f"\nUpdated {artist_file}:")
+        for field in updated:
+            print(f"  + {field}")
+    else:
+        print("\nNo new data to add.")
+
+
 def cmd_index(args):
     """Regenerate the root index."""
     write_index()
@@ -824,6 +915,11 @@ def main():
     # suggest subcommand
     p_suggest = sub.add_parser("suggest", help="Suggest new artists based on genre gaps and diversity")
     p_suggest.set_defaults(func=cmd_suggest)
+
+    # discogs subcommand
+    p_discogs = sub.add_parser("discogs", help="Enrich artist with Discogs profile/styles")
+    p_discogs.add_argument("name", help="Artist name")
+    p_discogs.set_defaults(func=cmd_discogs)
 
     # index subcommand
     p_index = sub.add_parser("index", help="Regenerate root index")
