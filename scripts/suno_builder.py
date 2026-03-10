@@ -7,7 +7,7 @@ and assembles a Suno-compatible style prompt with live preview.
 
 Key bindings (when not typing in a field):
   c  Copy prompt to clipboard
-  e  Save prompt to sessions/ folder as a text file
+  e  Save prompt to generated_prompts/ folder as a text file
   x  Clear all selections and fields
   q  Quit
 """
@@ -35,7 +35,7 @@ from markdown import read_md
 
 SUNO_CHAR_LIMIT = 1000
 SUNO_WORD_LIMIT = 180
-SESSIONS_DIR = PROJECT_ROOT / "sessions"
+PROMPTS_DIR = PROJECT_ROOT / "generated_prompts"
 
 MOOD_OPTIONS = [
     "aggressive", "angry", "atmospheric", "bleak", "brooding", "cathartic",
@@ -185,14 +185,14 @@ class PromptPreview(Static):
         lines.append("")
         lines.append(
             "[bold cyan]c[/bold cyan] Copy to clipboard    "
-            "[bold cyan]e[/bold cyan] Save to sessions/    "
+            "[bold cyan]e[/bold cyan] Save to generated_prompts/    "
             "[bold cyan]x[/bold cyan] Clear all    "
             "[bold cyan]q[/bold cyan] Quit"
         )
         lines.append("")
         lines.append(
             "[dim]Copy puts the prompt text on your clipboard for pasting into Suno.\n"
-            "Save writes a timestamped file to sessions/ with the prompt + your settings.[/dim]"
+            "Save writes a timestamped file to generated_prompts/ with the prompt + your settings.[/dim]"
         )
 
         self.update("\n".join(lines))
@@ -339,7 +339,7 @@ class SunoBuilderApp(App):
 
     BINDINGS = [
         Binding("c", "copy_prompt", "Copy to clipboard", priority=True),
-        Binding("e", "export_prompt", "Save to sessions/", priority=True),
+        Binding("e", "export_prompt", "Save to generated_prompts/", priority=True),
         Binding("x", "clear_all", "Clear all", priority=True),
         Binding("escape", "go_back", "Back"),
         Binding("q", "quit", "Quit"),
@@ -648,28 +648,31 @@ class SunoBuilderApp(App):
             self._set_status("[yellow]Nothing to save \u2014 select some artists first.[/yellow]")
             return
 
-        SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+        PROMPTS_DIR.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filepath = SESSIONS_DIR / f"suno_prompt_{timestamp}.txt"
+        filepath = PROMPTS_DIR / f"suno_prompt_{timestamp}.md"
 
         lines = [
             "# Suno Style Prompt",
-            f"# Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            f"# Characters: {len(prompt)} / {SUNO_CHAR_LIMIT}",
-            f"# Words: {len(prompt.split())} / {SUNO_WORD_LIMIT}",
+            "",
+            f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            f"Characters: {len(prompt)} / {SUNO_CHAR_LIMIT}",
+            f"Words: {len(prompt.split())} / {SUNO_WORD_LIMIT}",
             "",
         ]
 
         # Selected references
         if self._selected_artists:
-            lines.append("# --- Selected Artists ---")
+            lines.append("## Selected Artists")
+            lines.append("")
             for a in self._selected_artists:
-                lines.append(f"# {a['name']} ({a['genre']})")
+                lines.append(f"- **{a['name']}** — {a['genre']}")
             lines.append("")
         if self._selected_albums:
-            lines.append("# --- Selected Albums ---")
+            lines.append("## Selected Albums")
+            lines.append("")
             for a in self._selected_albums:
-                lines.append(f"# {a.get('year', '?')} - {a['title']}")
+                lines.append(f"- {a.get('year', '?')} - {a['title']}")
             lines.append("")
 
         # Field values
@@ -682,15 +685,21 @@ class SunoBuilderApp(App):
             ("Structure", "structure-input"),
             ("Production", "production-input"),
         ]
-        lines.append("# --- Field Values ---")
+        lines.append("## Settings")
+        lines.append("")
         for label, fid in field_ids:
             val = self.query_one(f"#{fid}", Input).value.strip()
             if val:
-                lines.append(f"# {label}: {val}")
+                lines.append(f"- **{label}:** {val}")
         lines.append("")
 
-        lines.append("# --- Prompt (paste this into Suno) ---")
+        lines.append("## Prompt")
+        lines.append("")
+        lines.append("> Paste this into Suno's style prompt field:")
+        lines.append("")
+        lines.append("```")
         lines.append(prompt)
+        lines.append("```")
         lines.append("")
 
         filepath.write_text("\n".join(lines), encoding="utf-8")

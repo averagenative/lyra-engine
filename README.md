@@ -105,8 +105,19 @@ python3 scripts/tui.py
 
 # Build a Suno-compatible style prompt interactively
 python3 scripts/suno_builder.py
-# Live preview with char/word count, copy to clipboard: 'c', export: 'e'
 ```
+
+### Output
+
+Both the TUI and the prompt builder can export their output:
+
+| Tool | Key | Output | Location |
+|------|-----|--------|----------|
+| **Prompt Builder** | `c` | Copy prompt to clipboard | (paste directly into Suno) |
+| **Prompt Builder** | `e` | Save prompt as `.md` file | `generated_prompts/suno_prompt_YYYYMMDD_HHMMSS.md` |
+| **Songwriting Session** | `e` | Save interview notes as `.md` | `sessions/session_YYYYMMDD_HHMMSS.md` |
+
+Saved prompt files include your selected artists, field settings, and the final prompt in a fenced code block ready to paste into Suno.
 
 ## Directory Structure
 
@@ -134,7 +145,8 @@ lyra-engine/
     SUNO_PROMPT_GUIDE.md # Suno prompt rules, translations, techniques
     ARTIST_STYLE_TEMPLATE.md  # Template for writing Suno-safe descriptions
     ENRICHMENT_VOCABULARY.md  # Controlled vocabulary for metadata tags
-  sessions/              # Exported songwriting sessions (gitignored)
+  sessions/              # Songwriting session notes (gitignored)
+  generated_prompts/     # Suno prompts as .md files (gitignored)
   artists/               # All fetched data (gitignored)
     _index.md
     {Artist}/
