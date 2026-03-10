@@ -4,7 +4,7 @@ import sys
 
 import musicbrainzngs
 
-musicbrainzngs.set_useragent("lyrics-database", "0.1", "https://github.com/example")
+musicbrainzngs.set_useragent("lyra-engine", "0.1", "https://github.com/example")
 
 # Release group primary types we care about
 DEFAULT_TYPES = ["album", "ep"]
@@ -39,7 +39,19 @@ def search_artist(name: str, interactive: bool = True) -> dict | None:
             print(f"  {i+1}. {a['name']}{extra} [{country}] (active: {begin}) [score: {s}]")
         print()
 
-        response = input(f"Use '{top['name']}'? [Y/n/1-5]: ").strip()
+        try:
+            response = input(f"Use '{top['name']}'? [Y/n/1-5]: ").strip()
+        except EOFError:
+            # Non-interactive mode: try to find exact name match
+            for a in artists:
+                if a["name"].lower() == name.lower():
+                    top = a
+                    print(f"  Auto-selected: {top['name']}")
+                    break
+            else:
+                print(f"  Auto-selected top match: {top['name']}")
+            response = ""
+
         if response.lower() == 'n':
             return None
         if response in ('2', '3', '4', '5') and int(response) <= len(artists):
@@ -92,6 +104,57 @@ def get_recording_tags(recording_id: str, min_count: int = 1) -> list[str]:
                 if int(t["count"]) >= min_count]
     except Exception:
         return []
+
+
+def get_artist_relationships(artist_id: str) -> dict:
+    """Fetch artist relationships from MusicBrainz.
+
+    Returns dict with: members, external_links (allmusic, lastfm, etc.)
+    """
+    try:
+        result = musicbrainzngs.get_artist_by_id(
+            artist_id, includes=["artist-rels", "url-rels"]
+        )
+        artist = result["artist"]
+    except Exception as e:
+        print(f"Error fetching relationships: {e}", file=sys.stderr)
+        return {"members": [], "external_links": {}}
+
+    # Extract band members
+    members = []
+    seen_members = set()
+    for rel in artist.get("artist-relation-list", []):
+        if rel["type"] == "member of band" and rel.get("direction") == "backward":
+            name = rel["artist"]["name"]
+            if name not in seen_members:
+                seen_members.add(name)
+                members.append(name)
+
+    # Extract external links
+    external_links = {}
+    link_types = {
+        "allmusic": "allmusic_url",
+        "last.fm": "lastfm_url",
+        "discogs": "discogs_url",
+        "official homepage": "website",
+        "wikidata": "wikidata_url",
+    }
+    for rel in artist.get("url-relation-list", []):
+        rel_type = rel["type"]
+        if rel_type in link_types:
+            external_links[link_types[rel_type]] = rel["target"]
+        # Also grab metal-archives, rateyourmusic from "other databases"
+        if rel_type == "other databases":
+            url = rel["target"]
+            if "metal-archives.com" in url:
+                external_links["metal_archives_url"] = url
+            elif "rateyourmusic.com" in url:
+                external_links["rateyourmusic_url"] = url
+
+    return {
+        "members": members,
+        "external_links": external_links,
+    }
 
 
 def get_discography(artist_id: str, types: list[str] | None = None,

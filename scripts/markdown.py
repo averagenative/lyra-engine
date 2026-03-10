@@ -109,7 +109,8 @@ def write_album(path: Path, title: str, artist: str, year: int,
 
 def write_artist(path: Path, name: str, artist_id: str, country: str,
                  life_span: dict, discography: list[dict],
-                 tags: list[str] | None = None):
+                 tags: list[str] | None = None,
+                 relationships: dict | None = None):
     """Write an _artist.md file."""
     artist_path = path / "_artist.md"
 
@@ -118,6 +119,7 @@ def write_artist(path: Path, name: str, artist_id: str, country: str,
     active = f"{begin}-{end}" if begin else ""
 
     genre_tags, mood_tags = _classify_tags(tags or [])
+    rels = relationships or {}
 
     frontmatter = {
         "type": "artist",
@@ -129,15 +131,62 @@ def write_artist(path: Path, name: str, artist_id: str, country: str,
         "suno_style_description": "",
         "country": country,
         "active_years": active,
+        "members": rels.get("members", []),
         "fetched_at": str(date.today()),
         "album_count": len(discography),
     }
+
+    # Add external links if available
+    for key, url in rels.get("external_links", {}).items():
+        frontmatter[key] = url
 
     lines = [f"# {name}", "", "## Discography"]
     for album in discography:
         lines.append(f"- {album['year']} - {album['title']} ({album['type']})")
 
+    if rels.get("members"):
+        lines.extend(["", "## Members"])
+        for member in rels["members"]:
+            lines.append(f"- {member}")
+
     _write_md(artist_path, frontmatter, "\n".join(lines))
+
+
+def read_md(path: Path) -> tuple[dict, str]:
+    """Read a markdown file with YAML frontmatter. Returns (frontmatter_dict, body)."""
+    with open(path, encoding="utf-8") as f:
+        content = f.read()
+
+    if not content.startswith("---"):
+        return {}, content
+
+    # Split on the second '---'
+    parts = content.split("---", 2)
+    if len(parts) < 3:
+        return {}, content
+
+    frontmatter = yaml.safe_load(parts[1]) or {}
+    body = parts[2].lstrip("\n")
+    return frontmatter, body
+
+
+def update_tags(path: Path, tags: list[str]):
+    """Update only the tag-related fields in an existing markdown file's frontmatter."""
+    fm, body = read_md(path)
+    if not fm:
+        return
+
+    genre_tags, mood_tags = _classify_tags(tags)
+
+    fm["genre"] = ", ".join(genre_tags) if genre_tags else ""
+    fm["mood"] = ", ".join(mood_tags) if mood_tags else ""
+    fm["musicbrainz_tags"] = tags
+
+    # Ensure suno_style_description exists for artist files
+    if fm.get("type") == "artist" and "suno_style_description" not in fm:
+        fm["suno_style_description"] = ""
+
+    _write_md(path, fm, body)
 
 
 def write_index():
@@ -162,7 +211,7 @@ def write_index():
         "last_updated": str(date.today()),
     }
 
-    lines = ["# Lyrics Database", "", "## Artists"]
+    lines = ["# Lyra Engine", "", "## Artists"]
     for name, dirname in artists:
         lines.append(f"- [{name}]({dirname}/_artist.md)")
 

@@ -1,18 +1,19 @@
-# Lyrics Database
+# Lyra Engine
 
 ## What This Is
-A file-based lyrics database in markdown, optimized for AI/agent consumption. Each artist gets a directory, each album a subdirectory, each song a .md file with YAML frontmatter and plain-text lyrics.
+A file-based lyrics and style reference engine in markdown, optimized for AI/agent consumption. Each artist gets a directory, each album a subdirectory, each song a .md file with YAML frontmatter and plain-text lyrics.
 
 ## Directory Layout
-- `_index.md` — root listing of all artists
-- `{Artist}/` — one dir per artist
-  - `_artist.md` — artist metadata + discography listing
-  - `{YYYY} - {Album}/` — one dir per album
-    - `_album.md` — album metadata + track listing
-    - `{NN} - {Song}.md` — song file with frontmatter + lyrics
+- `artists/` — all fetched artist data (gitignored, locally generated)
+  - `_index.md` — root listing of all artists
+  - `{Artist}/` — one dir per artist
+    - `_artist.md` — artist metadata + discography listing
+    - `{YYYY} - {Album}/` — one dir per album
+      - `_album.md` — album metadata + track listing
+      - `{NN} - {Song}.md` — song file with frontmatter + lyrics
 
 ## Navigating
-- To find all songs by an artist: read `{Artist}/_artist.md` for the discography, then read any album dir.
+- To find all songs by an artist: read `artists/{Artist}/_artist.md` for the discography, then read any album dir.
 - To find a specific song: the filename pattern is `{track_number} - {title}.md`.
 - Files with `[Lyrics not found]` as the body are placeholders.
 
@@ -25,6 +26,12 @@ A file-based lyrics database in markdown, optimized for AI/agent consumption. Ea
 - `python scripts/fetch.py artist "Band Name"` — fetch full discography + lyrics
 - `python scripts/fetch.py artist "Band Name" --albums-only` — scaffold only, no lyrics
 - `python scripts/fetch.py album "Band" "Album"` — fetch single album
+- `python scripts/fetch.py song "Song Title" --artist "Artist"` — fetch/update lyrics for a single song
+- `python scripts/fetch.py song "Song Title" --url "https://genius.com/..."` — fetch from specific URL
+- `python scripts/fetch.py missing` — list all songs with missing lyrics
+- `python scripts/fetch.py missing --retry` — retry fetching missing lyrics from Genius
+- `python scripts/fetch.py refresh-tags` — re-fetch MusicBrainz tags for all existing artists/albums/songs
+- `python scripts/fetch.py stats` — show database statistics (artists, songs, genres, moods)
 - `python scripts/fetch.py index` — regenerate root index
 - Requires: `GENIUS_API_TOKEN` env var, `pip install -r requirements.txt`
 

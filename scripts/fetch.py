@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lyrics Database CLI — fetch discographies and lyrics."""
+"""Lyra Engine CLI — fetch discographies and lyrics."""
 
 import argparse
 import sys
@@ -9,9 +9,9 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import artist_dir, album_dir, song_path
-from musicbrainz import search_artist, get_discography, get_tracklist, get_release_group_tags, get_recording_tags
-from markdown import write_song, write_album, write_artist, write_index
-from lyrics import fetch_lyrics, init_genius
+from musicbrainz import search_artist, get_discography, get_tracklist, get_release_group_tags, get_recording_tags, get_artist_relationships
+from markdown import write_song, write_album, write_artist, write_index, read_md, update_tags
+from lyrics import fetch_lyrics, fetch_lyrics_from_url, init_genius
 
 
 def has_lyrics(path):
@@ -52,14 +52,20 @@ def cmd_artist(args):
     for album in discography:
         print(f"  {album['year']} - {album['title']} ({album['type']})")
 
+    # Fetch relationships (members, external links)
+    relationships = get_artist_relationships(artist_info["id"])
+
     # Write artist metadata
     a_dir = artist_dir(name)
     write_artist(a_dir, name, artist_info["id"], artist_info["country"],
                  artist_info["life_span"], discography,
-                 tags=artist_info.get("tags", []))
+                 tags=artist_info.get("tags", []),
+                 relationships=relationships)
     print(f"\nWrote {a_dir / '_artist.md'}")
     if artist_info.get("tags"):
         print(f"  Tags: {', '.join(artist_info['tags'][:8])}")
+    if relationships.get("members"):
+        print(f"  Members: {', '.join(relationships['members'][:6])}")
 
     # Initialize Genius if we need lyrics
     if not args.albums_only:
@@ -235,13 +241,392 @@ def cmd_album(args):
     # Ensure artist file exists
     a_dir = artist_dir(name)
     if not (a_dir / "_artist.md").exists():
+        rels = get_artist_relationships(artist_info["id"])
         write_artist(a_dir, name, artist_info["id"], artist_info["country"],
                      artist_info["life_span"],
                      [match],
-                     tags=artist_info.get("tags", []))
+                     tags=artist_info.get("tags", []),
+                     relationships=rels)
 
     write_index()
     print(f"\nDone: {len(tracks)} tracks, {missing} missing lyrics.")
+
+
+def cmd_refresh_tags(args):
+    """Re-fetch MusicBrainz tags for all existing artists/albums/songs."""
+    from config import DATABASE_ROOT
+    import time
+
+    artists_updated = 0
+    albums_updated = 0
+    songs_updated = 0
+
+    for artist_entry in sorted(DATABASE_ROOT.iterdir()):
+        artist_md = artist_entry / "_artist.md"
+        if not artist_entry.is_dir() or not artist_md.exists():
+            continue
+
+        fm, _ = read_md(artist_md)
+        artist_name = fm.get("name", artist_entry.name)
+        artist_mbid = fm.get("musicbrainz_artist_id", "")
+
+        if not artist_mbid:
+            print(f"Skipping {artist_name}: no MusicBrainz ID")
+            continue
+
+        print(f"\n{'='*50}")
+        print(f"Refreshing tags for {artist_name}...")
+
+        # Fetch artist-level tags
+        try:
+            import musicbrainzngs
+            artist_detail = musicbrainzngs.get_artist_by_id(artist_mbid, includes=["tags"])
+            raw_tags = artist_detail["artist"].get("tag-list", [])
+            artist_tags = [t["name"] for t in sorted(raw_tags, key=lambda t: -int(t["count"]))
+                          if int(t["count"]) >= 1]
+        except Exception as e:
+            print(f"  Error fetching artist tags: {e}")
+            artist_tags = []
+
+        if artist_tags:
+            update_tags(artist_md, artist_tags)
+            artists_updated += 1
+            print(f"  Artist tags: {', '.join(artist_tags[:8])}")
+        else:
+            print(f"  No artist tags found")
+
+        # Process each album directory
+        for album_entry in sorted(artist_entry.iterdir()):
+            album_md = album_entry / "_album.md"
+            if not album_entry.is_dir() or not album_md.exists():
+                continue
+
+            afm, _ = read_md(album_md)
+            rg_id = afm.get("musicbrainz_release_group_id", "")
+            album_title = afm.get("title", album_entry.name)
+
+            if not rg_id:
+                continue
+
+            # Fetch album-level tags
+            album_tags = get_release_group_tags(rg_id)
+            if album_tags:
+                update_tags(album_md, album_tags)
+                albums_updated += 1
+                print(f"  {album_title}: {', '.join(album_tags[:6])}")
+
+            # Process songs in this album
+            for song_file in sorted(album_entry.glob("*.md")):
+                if song_file.name.startswith("_"):
+                    continue
+
+                sfm, _ = read_md(song_file)
+                rec_id = sfm.get("musicbrainz_recording_id", "")
+                if not rec_id:
+                    continue
+
+                song_tags = get_recording_tags(rec_id)
+                # Use song tags if available, otherwise inherit album tags
+                effective_tags = song_tags or album_tags
+                if effective_tags:
+                    update_tags(song_file, effective_tags)
+                    songs_updated += 1
+
+            time.sleep(0.5)  # Be nice to MusicBrainz API
+
+    print(f"\n{'='*50}")
+    print(f"Tags refreshed:")
+    print(f"  Artists: {artists_updated}")
+    print(f"  Albums: {albums_updated}")
+    print(f"  Songs: {songs_updated}")
+
+
+def cmd_song(args):
+    """Fetch or update lyrics for a single song, optionally from a URL."""
+    from config import DATABASE_ROOT
+    import glob as globmod
+
+    # Find the song file
+    pattern = f"artists/*/**/*{args.song}*.md"
+    matches = [p for p in DATABASE_ROOT.parent.glob(pattern)
+               if not p.name.startswith("_")]
+
+    # Also try artist-scoped search
+    if args.artist:
+        artist_pattern = f"artists/{args.artist}*/**/*{args.song}*.md"
+        artist_matches = [p for p in DATABASE_ROOT.parent.glob(artist_pattern)
+                          if not p.name.startswith("_")]
+        if artist_matches:
+            matches = artist_matches
+
+    if not matches:
+        print(f"No song file matching '{args.song}' found.", file=sys.stderr)
+        if args.artist:
+            print(f"  (searched in artists matching '{args.artist}')", file=sys.stderr)
+        sys.exit(1)
+
+    if len(matches) > 1:
+        print(f"Multiple matches for '{args.song}':")
+        for i, m in enumerate(matches[:10], 1):
+            print(f"  {i}. {m.relative_to(DATABASE_ROOT.parent)}")
+        try:
+            choice = input("Which one? [1]: ").strip()
+        except EOFError:
+            choice = "1"
+        idx = int(choice) - 1 if choice.isdigit() else 0
+        song_file = matches[idx]
+    else:
+        song_file = matches[0]
+
+    print(f"Song: {song_file.relative_to(DATABASE_ROOT.parent)}")
+
+    fm, body = read_md(song_file)
+    artist = fm.get("artist", "")
+    title = fm.get("title", "")
+
+    if args.url:
+        # Fetch from provided URL
+        print(f"Fetching lyrics from URL: {args.url}")
+        lyrics = fetch_lyrics_from_url(args.url)
+        if lyrics:
+            fm["genius_url"] = args.url
+            from markdown import _write_md
+            _write_md(song_file, fm, lyrics)
+            print(f"Updated with lyrics from URL ({len(lyrics)} chars)")
+        else:
+            print("Could not extract lyrics from URL.", file=sys.stderr)
+    elif args.paste:
+        # Read from stdin
+        print("Paste lyrics below (Ctrl+D when done):")
+        try:
+            lyrics = sys.stdin.read().strip()
+        except EOFError:
+            lyrics = ""
+        if lyrics:
+            from markdown import _write_md
+            _write_md(song_file, fm, lyrics)
+            print(f"Updated with pasted lyrics ({len(lyrics)} chars)")
+        else:
+            print("No lyrics provided.", file=sys.stderr)
+    else:
+        # Try Genius
+        init_genius()
+        print(f"Searching Genius for '{title}' by {artist}...")
+        lyrics, url = fetch_lyrics(artist, title)
+        if lyrics:
+            fm["genius_url"] = url or ""
+            from markdown import _write_md
+            _write_md(song_file, fm, lyrics)
+            print(f"Updated with lyrics from Genius ({len(lyrics)} chars)")
+        else:
+            print(f"Not found on Genius. Try:")
+            print(f"  --url <genius-url>   Provide a direct URL")
+            print(f"  --paste              Paste lyrics from stdin")
+
+
+def cmd_missing(args):
+    """List all songs with missing lyrics, optionally retry fetching."""
+    from config import DATABASE_ROOT
+
+    missing = []
+    for artist_entry in sorted(DATABASE_ROOT.iterdir()):
+        if not artist_entry.is_dir() or artist_entry.name.startswith("_"):
+            continue
+        for album_entry in sorted(artist_entry.iterdir()):
+            if not album_entry.is_dir():
+                continue
+            for song_file in sorted(album_entry.glob("*.md")):
+                if song_file.name.startswith("_"):
+                    continue
+                fm, body = read_md(song_file)
+                if "[Lyrics not found]" in body:
+                    rel = song_file.relative_to(DATABASE_ROOT)
+                    missing.append((song_file, fm, rel))
+
+    if not missing:
+        print("No missing lyrics!")
+        return
+
+    print(f"Songs with missing lyrics: {len(missing)}\n")
+
+    if args.artist:
+        missing = [(f, fm, r) for f, fm, r in missing
+                   if fm.get("artist", "").lower() == args.artist.lower()
+                   or args.artist.lower() in str(r).lower()]
+        print(f"  (filtered to '{args.artist}': {len(missing)} songs)\n")
+
+    for song_file, fm, rel in missing:
+        artist = fm.get("artist", "?")
+        title = fm.get("title", "?")
+        print(f"  {artist} — {title}")
+        print(f"    {rel}")
+
+    if args.retry:
+        print(f"\nRetrying Genius for {len(missing)} songs...")
+        init_genius()
+        found = 0
+        for song_file, fm, rel in missing:
+            artist = fm.get("artist", "")
+            title = fm.get("title", "")
+            print(f"  {title} ... ", end="", flush=True)
+            lyrics, url = fetch_lyrics(artist, title)
+            if lyrics:
+                fm["genius_url"] = url or ""
+                from markdown import _write_md
+                _write_md(song_file, fm, lyrics)
+                found += 1
+                print("OK")
+            else:
+                print("still missing")
+        print(f"\nRetry complete: {found}/{len(missing)} found")
+
+
+def cmd_similar(args):
+    """Find similar artists using MusicBrainz tags and show which are in the database."""
+    from config import DATABASE_ROOT
+
+    # Find the artist
+    artist_info = search_artist(args.name)
+    if not artist_info:
+        sys.exit(1)
+
+    name = artist_info["name"]
+    tags = artist_info.get("tags", [])
+    print(f"Artist: {name}")
+    print(f"Tags: {', '.join(tags[:10])}")
+
+    # Get which artists are already in the database
+    db_artists = set()
+    for entry in DATABASE_ROOT.iterdir():
+        if entry.is_dir() and (entry / "_artist.md").exists():
+            fm, _ = read_md(entry / "_artist.md")
+            db_artists.add(fm.get("name", entry.name).lower())
+
+    # Search MusicBrainz for artists with similar tags
+    if not tags:
+        print("\nNo tags available for similarity search.")
+        return
+
+    print(f"\nSearching for similar artists (by shared tags)...")
+    import musicbrainzngs
+    similar = {}
+
+    # Use more specific/niche tags first (skip generic ones)
+    generic_tags = {"rock", "metal", "electronic", "pop", "alternative", "indie",
+                    "heavy metal", "pop/rock", "alternative rock"}
+    specific_tags = [t for t in tags if t.lower() not in generic_tags]
+    search_tags = (specific_tags or tags)[:5]
+
+    for tag in search_tags:
+        try:
+            result = musicbrainzngs.search_artists(tag=tag, limit=50)
+            for a in result.get("artist-list", []):
+                a_name = a["name"]
+                a_id = a["id"]
+                score = int(a.get("ext:score", 0))
+                if a_name.lower() == name.lower():
+                    continue
+                # Skip very generic matches (low relevance)
+                if score < 50:
+                    continue
+                if a_id not in similar:
+                    similar[a_id] = {"name": a_name, "tags": [], "score": 0,
+                                     "country": a.get("country", "??"),
+                                     "in_db": a_name.lower() in db_artists}
+                similar[a_id]["tags"].append(tag)
+                similar[a_id]["score"] += 1
+        except Exception:
+            continue
+
+    # Sort by shared tag count, then by name
+    ranked = sorted(similar.values(), key=lambda x: (-x["score"], x["name"]))
+
+    print(f"\n{'─'*60}")
+    print(f"{'Artist':<30} {'Country':>4} {'Shared Tags':>12} {'In DB':>6}")
+    print(f"{'─'*60}")
+    for s in ranked[:25]:
+        in_db = " YES" if s["in_db"] else ""
+        tags_str = ", ".join(s["tags"][:3])
+        print(f"{s['name']:<30} {s['country']:>4} {tags_str:>12} {in_db:>6}")
+
+    in_db_count = sum(1 for s in ranked[:25] if s["in_db"])
+    print(f"\n{in_db_count} of top 25 similar artists already in database")
+
+
+def cmd_stats(args):
+    """Show database statistics: genres, moods, artists, song counts."""
+    from config import DATABASE_ROOT
+    from collections import Counter
+
+    genres = Counter()
+    moods = Counter()
+    artists = []
+    total_songs = 0
+    total_with_lyrics = 0
+
+    for artist_entry in sorted(DATABASE_ROOT.iterdir()):
+        artist_md = artist_entry / "_artist.md"
+        if not artist_entry.is_dir() or not artist_md.exists():
+            continue
+
+        fm, _ = read_md(artist_md)
+        artist_name = fm.get("name", artist_entry.name)
+        artist_genre = fm.get("genre", "")
+        song_count = 0
+        lyrics_count = 0
+
+        for album_entry in sorted(artist_entry.iterdir()):
+            if not album_entry.is_dir():
+                continue
+            for song_file in album_entry.glob("*.md"):
+                if song_file.name.startswith("_"):
+                    continue
+                song_count += 1
+                sfm, body = read_md(song_file)
+
+                # Count lyrics
+                if body.strip() and "[Lyrics not found]" not in body:
+                    lyrics_count += 1
+
+                # Collect genres/moods
+                g = sfm.get("genre", "")
+                m = sfm.get("mood", "")
+                if g:
+                    for tag in [t.strip() for t in g.split(",")]:
+                        if tag:
+                            genres[tag] += 1
+                if m:
+                    for tag in [t.strip() for t in m.split(",")]:
+                        if tag:
+                            moods[tag] += 1
+
+        artists.append((artist_name, artist_genre, song_count, lyrics_count))
+        total_songs += song_count
+        total_with_lyrics += lyrics_count
+
+    # Print summary
+    print(f"{'='*60}")
+    print(f"LYRA ENGINE STATS")
+    print(f"{'='*60}")
+    print(f"\nArtists: {len(artists)}  |  Songs: {total_songs}  |  With lyrics: {total_with_lyrics}")
+    print(f"\n{'─'*60}")
+    print(f"{'Artist':<25} {'Genre':<25} {'Songs':>6} {'Lyrics':>7}")
+    print(f"{'─'*60}")
+    for name, genre, songs, lyrics in artists:
+        g = genre[:24] if genre else "(none)"
+        print(f"{name:<25} {g:<25} {songs:>6} {lyrics:>7}")
+
+    if genres:
+        print(f"\n{'─'*60}")
+        print(f"GENRES (by song count):")
+        for tag, count in genres.most_common(30):
+            print(f"  {tag:<35} {count:>5} songs")
+
+    if moods:
+        print(f"\n{'─'*60}")
+        print(f"MOODS (by song count):")
+        for tag, count in moods.most_common(20):
+            print(f"  {tag:<35} {count:>5} songs")
 
 
 def cmd_index(args):
@@ -252,7 +637,7 @@ def cmd_index(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Lyrics Database — fetch discographies and lyrics"
+        description="Lyra Engine — fetch discographies and lyrics"
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -279,9 +664,44 @@ def main():
                           help="Re-fetch even if files exist")
     p_album.set_defaults(func=cmd_album)
 
+    # song subcommand
+    p_song = sub.add_parser("song", help="Fetch/update lyrics for a single song")
+    p_song.add_argument("song", help="Song title (partial match)")
+    p_song.add_argument("--artist", help="Artist name (narrows search)")
+    p_song.add_argument("--url", help="Genius URL to scrape lyrics from")
+    p_song.add_argument("--paste", action="store_true",
+                        help="Paste lyrics from stdin")
+    p_song.set_defaults(func=cmd_song)
+
+    # missing subcommand
+    p_missing = sub.add_parser("missing", help="List/retry songs with missing lyrics")
+    p_missing.add_argument("--artist", help="Filter to specific artist")
+    p_missing.add_argument("--retry", action="store_true",
+                           help="Retry fetching from Genius")
+    p_missing.set_defaults(func=cmd_missing)
+
+    # similar subcommand
+    p_similar = sub.add_parser("similar", help="Find similar artists via MusicBrainz tags")
+    p_similar.add_argument("name", help="Artist name")
+    p_similar.set_defaults(func=cmd_similar)
+
+    # refresh-tags subcommand
+    p_refresh = sub.add_parser("refresh-tags", help="Re-fetch MusicBrainz tags for all artists")
+    p_refresh.set_defaults(func=cmd_refresh_tags)
+
+    # stats subcommand
+    p_stats = sub.add_parser("stats", help="Show database statistics (genres, moods, counts)")
+    p_stats.set_defaults(func=cmd_stats)
+
     # index subcommand
     p_index = sub.add_parser("index", help="Regenerate root index")
     p_index.set_defaults(func=cmd_index)
+
+    # enrich subcommand
+    from enrich import cmd_enrich, _build_parser as _enrich_parser
+    p_enrich = sub.add_parser("enrich",
+                              help="Suggest enrichment tags (mood, style, energy, themes)")
+    _enrich_parser(p_enrich)
 
     args = parser.parse_args()
     args.func(args)

@@ -36,18 +36,18 @@
 - [x] 3.3 Add network error handling — try/except on get_tracklist and fetch_lyrics, log and continue on failure
 - [x] 3.4 Add progress output — album counter [N/total] and track counter NN/total in lyrics fetch
 - [x] 3.5 Handle Genius edge cases — instrumental detection, robust trailing cleanup (Embed, digits, empty lines), timeout handling
-- [ ] 3.6 Validate with target artist list: Deftones, Crowbar, Sleep (done), Type O Negative, Opeth, Nine Inch Nails — fix any issues found
+- [x] 3.6 Validate with target artist list — all 11 artists fetched successfully (Deftones, Crowbar, Sleep, Type O Negative, Opeth, NIN, Spiritbox, Kublai Khan TX, Cannibal Corpse, Sanguisugabogg, Portishead). Added `refresh-tags` command and moved data to `artists/` directory.
 
 ## 4. Suno Style Descriptions & Prompt Generator (P1)
 
 > Goal: Each `_artist.md` contains a `suno_style_description` field. An agent can read it and produce a Suno-ready prompt without manual research.
 > Delivers: Eliminates the "translate artist name to Suno-safe language" bottleneck.
 
-- [ ] 4.1 Add `suno_style_description` field to `_artist.md` frontmatter schema (empty string by default, filled per-artist)
-- [ ] 4.2 Add `suno_style_description` field to `_album.md` frontmatter schema — album-level style can differ from artist-level (e.g., Radiohead's Kid A vs. The Bends)
-- [ ] 4.3 Write `suno_style_description` for 3 initial artists by researching AllMusic/Discogs/RYM and analyzing their lyrics in the database — document the research process so it's repeatable
-- [ ] 4.4 Create `guides/ARTIST_STYLE_TEMPLATE.md` — a fill-in template for writing Suno-safe artist descriptions, with the translation process (AllMusic lookup → extract Styles/Moods → combine with era + production texture + instruments)
-- [ ] 4.5 Add example artist translations to `guides/SUNO_PROMPT_GUIDE.md` covering multiple genres (not just industrial/alternative — add pop, hip-hop, folk, electronic examples from the user's actual library)
+- [x] 4.1 Add `suno_style_description` field to `_artist.md` frontmatter schema (empty string by default, filled per-artist)
+- [x] 4.2 Add `suno_style_description` field to `_album.md` frontmatter schema — album-level style can differ from artist-level (documented in ARTIST_STYLE_TEMPLATE.md)
+- [x] 4.3 Write `suno_style_description` for 3 initial artists (Deftones, Crowbar, Type O Negative) by analyzing database lyrics and MusicBrainz tags
+- [x] 4.4 Create `guides/ARTIST_STYLE_TEMPLATE.md` — fill-in template with research process, sonic signature fields, validation checklist, and 3 worked examples
+- [x] 4.5 Add example artist translations to `guides/SUNO_PROMPT_GUIDE.md` — added all 11 database artists (sludge, death metal, gothic, metalcore, trip-hop, stoner doom, hardcore, progressive)
 
 ## 5. Lyricist Guide & Song Design Workflow (P1)
 
@@ -56,27 +56,76 @@
 
 - [x] 5.1 Create `guides/SUNO_PROMPT_GUIDE.md` — style prompt rules, structure, non-default policy, meta-tag categories, Suno technical notes
 - [x] 5.2 Create `guides/LYRICIST_GUIDE.md` — 7-question song design interview, lyrics writing rules, style blending instructions, end-to-end workflow
-- [ ] 5.3 Add the "Sound Designer" agent persona to `guides/LYRICIST_GUIDE.md` — adapted from the "River Stone Audio" persona in `~/projects/greentd/game/audio/SUNO-RESEARCH.md`, generalized beyond game audio
-- [ ] 5.4 Add a "Style Blending" worked example to the guide — pick 2 artists from the database, walk through the full process: read `_artist.md` → sample lyrics → identify elements to blend → write lyrics → generate Suno prompt
-- [ ] 5.5 Add era-based filtering instructions — how to find "all '90s alternative" or "2000s electronic" across the database using directory names and frontmatter
-- [ ] 5.6 Validation: run a full songwriting session using only the database and guides (no external research). Identify any gaps where the agent needs information not in the repo, and fill them.
+- [x] 5.3 Add Sound Designer persona to `guides/LYRICIST_GUIDE.md` — generalized from River Stone Audio, covers genre fluency, production knowledge, Suno workflow
+- [x] 5.4 Add Style Blending worked example — Crowbar + Type O Negative blend with full walkthrough: read data → sample lyrics → identify elements → write lyrics → generate prompt
+- [x] 5.5 Add era-based filtering instructions — directory name patterns, frontmatter grep commands, era+genre combinations
+- [x] 5.6 Validation: ran Crowbar+Portishead blend session. Found gaps: Portishead 0 lyrics, missing suno_style_descriptions, empty enrichment fields. Fixed: added sonic-only reference fallback path to guide, ran enrichment on all artists (1225/1758 songs enriched).
+
+## 5B. Agent Definitions (P1)
+
+> Goal: Specialized agent personas defined using agents.md convention for any AI coding agent to adopt.
+> Delivers: Drop-in agent definitions for songwriting sessions.
+
+- [x] 5B.1 Create `AGENTS.md` — universal agent guide (project overview, commands, data layout, schema reference)
+- [x] 5B.2 Create `agents/lyricist.md` — lyricist agent persona with database navigation, style analysis, song design interview, writing rules
+- [x] 5B.3 Create `agents/producer.md` — music producer agent with Suno mastery, style translation, multi-pass builds, meta-tags
 
 ## 6. Metadata Enrichment (P2)
 
 > Goal: Frontmatter fields (`genre`, `mood`, `themes`, `style`, `energy`) are populated, enabling precise filtering.
 > Delivers: "Give me all melancholic songs from the '90s" actually works.
 
-- [ ] 6.1 Define the controlled vocabulary for each enrichment field — list valid values for `mood`, `style`, `energy` to keep tags consistent across artists
-- [ ] 6.2 Create `scripts/enrich.py` — a script that reads song files and uses an LLM (via API or agent) to suggest tags based on lyrics content, writing them back to frontmatter
-- [ ] 6.3 Enrich one complete artist as a pilot — verify tag quality, adjust vocabulary if needed
-- [ ] 6.4 Add `genre` population from MusicBrainz tags during ingestion (MusicBrainz has genre/tag data on artists and release groups) — so at least genre is auto-populated on first fetch
+- [x] 6.4 Add `genre`/`mood` population from MusicBrainz tags during ingestion — auto-classified at artist, album, and song levels. Added `refresh-tags` command for backfilling.
+- [x] 6.1 Define controlled vocabulary — `guides/ENRICHMENT_VOCABULARY.md` with valid values for `mood` (27 values), `style` (21 values), `energy` (8 values), `themes` (32 values)
+- [x] 6.2 Create `scripts/enrich.py` — heuristic-based enrichment (keyword matching for mood/themes, energy scoring, genre-to-style mapping). Includes `--dry-run`, `--llm` mode for LLM prompts. Registered as `fetch.py enrich` subcommand.
+- [x] 6.3 Enriched all artists: 1225/1758 songs enriched (mood: 1077, themes: 1172, energy: 1225, style: 966). Sleep piloted first.
 
 ## 7. Advanced Suno Workflow Documentation (P3)
 
 > Goal: Complex production techniques are documented for when needed.
 > Delivers: Reference material for multi-pass Studio builds and post-processing.
 
-- [ ] 7.1 Add multi-pass Suno Studio workflow to `guides/SUNO_PROMPT_GUIDE.md` — the 6-pass strategy (foundation → instruments → rhythm → texture → extend → remaster)
-- [ ] 7.2 Add Suno v5/Studio capability reference — Warp Markers, stem separation, Alternates, Time Signature support, credit costs
-- [ ] 7.3 Add post-processing reference — ffmpeg commands for loop creation, loudness normalization, format conversion (from existing `SUNO-RESEARCH.md`)
-- [ ] 7.4 Add instrumental-only techniques section — three-method approach (style prompt + lyrics field + negative prompting) with troubleshooting for when vocals leak through
+- [x] 7.1 Add multi-pass Suno Studio workflow to `guides/SUNO_PROMPT_GUIDE.md` — the 6-pass strategy (foundation → instruments → rhythm → texture → extend → remaster)
+- [x] 7.2 Add Suno v5/Studio capability reference — already in guide: Warp Markers, stem separation, Alternates, Time Signature support, credit costs
+- [x] 7.3 Add post-processing reference — ffmpeg commands for loop creation, loudness normalization, format conversion
+- [x] 7.4 Add instrumental-only techniques section — three-method approach (style prompt + lyrics field + negative prompting) with troubleshooting for vocal leakage
+
+## 8. TUI & Interactive Tools (P2)
+
+> Goal: A terminal UI for browsing the database, selecting genres/moods, and running songwriting sessions.
+> Delivers: Interactive workflow that doesn't require memorizing CLI commands.
+
+- [x] 8.1 Create `scripts/tui.py` — textual-based TUI for browsing artists → albums → tracks → lyrics with genre search/filter
+- [x] 8.2 Add genre/mood filter — type `genre:doom` in search to filter artists by genre tags
+- [ ] 8.3 Add songwriting session mode — walks through the 7-question interview, pulls reference material, generates output
+- [ ] 8.4 Add Suno prompt builder — interactive prompt construction with genre/mood/instrument selection from database vocabulary
+
+## 9. Artist Relationships & Discovery (P2)
+
+> Goal: Understand who inspired each artist and suggest similar artists, both in and outside the database.
+> Delivers: "I like Crowbar, who else should I listen to?" and "what influenced this band's sound?"
+
+- [x] 9.1 Add MusicBrainz artist relationships to ingestion — fetch members, external links (AllMusic, Last.fm, Discogs, Metal Archives, RYM URLs)
+- [x] 9.2 Store relationships in `_artist.md` frontmatter — `members` list, external link URLs. New artists auto-populate on fetch.
+- [x] 9.3 Create `fetch.py similar "Artist"` command — query MusicBrainz for artists sharing niche tags, show which are in the database
+- [ ] 9.4 Create `fetch.py suggest` command — analyze genre/mood patterns across the database and suggest artists that would fill gaps or complement existing collection
+- [ ] 9.5 Add relationship graph to `_index.md` — show connections between artists in the database (shared genres, influence chains)
+
+## 10. Documentation & README (P1)
+
+> Goal: A README.md that explains the project to humans who work with AI agents.
+> Delivers: Anyone can clone the repo, understand the purpose, and start using it with Claude/OpenCode/scripts.
+
+- [x] 10.1 Create `README.md` — project overview, setup (with API key instructions + links), CLI usage, agent integration, directory structure, frontmatter schema
+- [x] 10.2 Rename project to "Lyra Engine" — updated README, CLAUDE.md, AGENTS.md, fetch.py, tui.py, musicbrainz.py, markdown.py, _index.md
+
+## 11. External Data Sources (P3)
+
+> Goal: Enrich the database with data from additional sources beyond MusicBrainz and Genius.
+> Delivers: Richer artist bios, album reviews, and style descriptions for better Suno prompt generation.
+
+- [ ] 10.1 Research AllMusic data access — no public API, evaluate web scraping feasibility for artist bios, styles, moods, and album reviews
+- [ ] 10.2 Add AllMusic scraper to ingestion pipeline — fetch artist bio, styles, moods, and store in `_artist.md` frontmatter (`allmusic_bio`, `allmusic_styles`, `allmusic_moods`)
+- [ ] 10.3 Add album review summaries from AllMusic to `_album.md` — useful for understanding production and sonic character
+- [ ] 10.4 Evaluate Discogs API (has a public API with OAuth) — genres, styles, tracklists, label info
+- [ ] 10.5 Add lyrics URL fallback — when Genius fails, search alternative lyrics sites (AZLyrics, MetroLyrics) via web search

@@ -7,7 +7,10 @@ from pathlib import Path
 from slugify import slugify
 
 # Project root is the parent of the scripts/ directory
-DATABASE_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# All artist data lives under artists/ subdirectory
+DATABASE_ROOT = PROJECT_ROOT / "artists"
 
 # Rate limiting
 GENIUS_SLEEP_SECONDS = 1.5
