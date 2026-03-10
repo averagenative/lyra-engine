@@ -33,6 +33,70 @@ Add your Genius token to a `.env` file in the project root:
 echo 'GENIUS_API_TOKEN=your_token_here' > .env
 ```
 
+## How to Use
+
+There are three ways to use Lyra Engine. Pick whatever fits your workflow, or mix and match.
+
+### 1. Standalone (no AI agent needed)
+
+Use the CLI to build the database, and the TUI to browse and create.
+
+```bash
+# Build the database
+python3 scripts/fetch.py artist "Deftones"
+python3 scripts/fetch.py artist "Crowbar"
+python3 scripts/fetch.py enrich --all
+
+# Launch the TUI
+python3 scripts/tui.py
+```
+
+The TUI has a home screen with quick actions:
+- **b** Browse — drill into artists/albums/songs, read lyrics
+- **s** Session — guided 7-question songwriting interview, exports to `sessions/`
+- **p** Prompts — interactive Suno prompt builder with live preview and char/word limits
+- **f** Find — search songs by genre, mood, energy, theme, year, or keyword
+
+From the TUI or prompt builder, export your session/prompt, then paste directly into Suno.
+
+### 2. With an AI Agent (recommended for songwriting)
+
+The database is designed as a reference library for AI coding agents. The agent reads the markdown files — lyrics, frontmatter metadata, style descriptions — and uses them to write original songs and generate Suno prompts.
+
+```bash
+# From the project root:
+claude                    # or opencode, or any agents.md-compatible tool
+
+# Then ask things like:
+# "Write a song that blends Crowbar's sludge with Type O Negative's gothic theatricality"
+# "Generate a Suno prompt for something that sounds like 90s trip-hop meets doom metal"
+# "Show me all melancholic songs from the 2000s"
+# "Analyze Deftones' lyrical patterns across their discography"
+```
+
+The agent reads `CLAUDE.md` (or `AGENTS.md`) automatically and knows how to navigate the database, run the songwriting interview, and output Suno-ready prompts. Two specialized personas are available in `agents/`:
+
+- **`agents/lyricist.md`** — Writes original lyrics grounded in database artists' styles. Runs the 7-question song design interview, analyzes vocabulary/metaphor/structure, blends styles.
+- **`agents/producer.md`** — Generates Suno-compatible style prompts. Translates artist sounds into descriptive language (no artist names — Suno strips them), designs sonic palettes.
+
+### 3. Hybrid (TUI + Agent)
+
+Use the TUI for discovery and browsing, the agent for creative work:
+1. Browse the database in the TUI to find reference songs and artists
+2. Switch to your agent session for the actual songwriting
+3. Use the Suno prompt builder (TUI) to fine-tune the prompt interactively
+
+### Songwriting Workflow
+
+```
+1. CONCEPT       → Define idea, emotional center, perspective
+2. STYLE REF     → Read artists from the database (TUI or agent)
+3. INTERVIEW     → 7-question song design (TUI session or agent conversation)
+4. LYRICS        → Write lyrics with style constraints (agent or manual)
+5. SUNO PROMPT   → Generate style prompt (prompt builder or agent)
+6. GENERATE      → Paste into Suno, iterate
+```
+
 ## CLI Usage
 
 ### Fetching Data
@@ -154,70 +218,6 @@ lyra-engine/
       {YYYY} - {Album}/
         _album.md        # Album metadata, genre, track listing
         {NN} - {Song}.md # YAML frontmatter + plain-text lyrics
-```
-
-## How to Use
-
-There are three ways to use Lyra Engine. Pick whatever fits your workflow, or mix and match.
-
-### 1. Standalone (no AI agent needed)
-
-Use the CLI to build the database, and the TUI to browse and create.
-
-```bash
-# Build the database
-python3 scripts/fetch.py artist "Deftones"
-python3 scripts/fetch.py artist "Crowbar"
-python3 scripts/fetch.py enrich --all
-
-# Launch the TUI
-python3 scripts/tui.py
-```
-
-The TUI has a home screen with quick actions:
-- **b** Browse — drill into artists/albums/songs, read lyrics
-- **s** Session — guided 7-question songwriting interview, exports to `sessions/`
-- **p** Prompts — interactive Suno prompt builder with live preview and char/word limits
-- **f** Find — search songs by genre, mood, energy, theme, year, or keyword
-
-From the TUI or prompt builder, export your session/prompt, then paste directly into Suno.
-
-### 2. With an AI Agent (recommended for songwriting)
-
-The database is designed as a reference library for AI coding agents. The agent reads the markdown files — lyrics, frontmatter metadata, style descriptions — and uses them to write original songs and generate Suno prompts.
-
-```bash
-# From the project root:
-claude                    # or opencode, or any agents.md-compatible tool
-
-# Then ask things like:
-# "Write a song that blends Crowbar's sludge with Type O Negative's gothic theatricality"
-# "Generate a Suno prompt for something that sounds like 90s trip-hop meets doom metal"
-# "Show me all melancholic songs from the 2000s"
-# "Analyze Deftones' lyrical patterns across their discography"
-```
-
-The agent reads `CLAUDE.md` (or `AGENTS.md`) automatically and knows how to navigate the database, run the songwriting interview, and output Suno-ready prompts. Two specialized personas are available in `agents/`:
-
-- **`agents/lyricist.md`** — Writes original lyrics grounded in database artists' styles. Runs the 7-question song design interview, analyzes vocabulary/metaphor/structure, blends styles.
-- **`agents/producer.md`** — Generates Suno-compatible style prompts. Translates artist sounds into descriptive language (no artist names — Suno strips them), designs sonic palettes.
-
-### 3. Hybrid (TUI + Agent)
-
-Use the TUI for discovery and browsing, the agent for creative work:
-1. Browse the database in the TUI to find reference songs and artists
-2. Switch to your agent session for the actual songwriting
-3. Use the Suno prompt builder (TUI) to fine-tune the prompt interactively
-
-### Songwriting Workflow
-
-```
-1. CONCEPT       → Define idea, emotional center, perspective
-2. STYLE REF     → Read artists from the database (TUI or agent)
-3. INTERVIEW     → 7-question song design (TUI session or agent conversation)
-4. LYRICS        → Write lyrics with style constraints (agent or manual)
-5. SUNO PROMPT   → Generate style prompt (prompt builder or agent)
-6. GENERATE      → Paste into Suno, iterate
 ```
 
 ## Song Frontmatter Schema
