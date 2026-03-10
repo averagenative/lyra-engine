@@ -13,6 +13,7 @@ Key bindings (when not typing in a field):
 """
 
 import os
+import random
 import subprocess
 import sys
 from datetime import datetime
@@ -49,6 +50,71 @@ ENERGY_OPTIONS = [
     "building", "constant-high", "constant-low", "dynamic", "explosive",
     "fading", "rolling", "steady-mid",
 ]
+
+# Word pools for title generation, keyed by mood/genre feel
+_TITLE_NOUNS = {
+    "dark": ["Shadows", "Ashes", "Void", "Abyss", "Eclipse", "Descent", "Hollow", "Ruin"],
+    "heavy": ["Iron", "Stone", "Weight", "Anvil", "Monolith", "Colossus", "Titan", "Fortress"],
+    "atmospheric": ["Haze", "Drift", "Fog", "Veil", "Horizon", "Canopy", "Static", "Ether"],
+    "melancholic": ["Echoes", "Ghosts", "Ruins", "Embers", "Fading", "Remains", "Whispers", "Dust"],
+    "aggressive": ["Teeth", "Wire", "Fracture", "Shrapnel", "Voltage", "Scorch", "Razor", "Breach"],
+    "dreamy": ["Lucid", "Mirage", "Reverie", "Prism", "Aurora", "Shimmer", "Halo", "Twilight"],
+    "defiant": ["Stand", "Unbroken", "Unyielding", "Sovereign", "Reclaim", "Resist", "Endure", "Rise"],
+    "doom": ["Tomb", "Dirge", "Pyre", "Requiem", "Vigil", "Shroud", "Lament", "Procession"],
+    "sludge": ["Mud", "Tar", "Crawl", "Undertow", "Swamp", "Grind", "Slab", "Trench"],
+    "industrial": ["Machine", "Signal", "Grid", "Circuit", "Rust", "Piston", "Conduit", "Compound"],
+    "gothic": ["Cathedral", "Midnight", "Crimson", "Velvet", "Thorns", "Crypt", "Manor", "Mourning"],
+    "trip hop": ["Smoke", "Pulse", "Nocturne", "Low", "Undercurrent", "Dissolve", "Submerge", "Beneath"],
+}
+_TITLE_DEFAULT = ["Hymn", "Signal", "Archive", "Threshold", "Monument", "Passage", "Resonance", "Fracture"]
+_TITLE_PATTERNS = [
+    "{noun}",
+    "The {noun}",
+    "{noun} of {noun2}",
+    "{adj} {noun}",
+    "Beyond the {noun}",
+    "No {noun}",
+    "{noun} // {noun2}",
+    "All This {noun}",
+]
+_TITLE_ADJS = [
+    "Concrete", "Hollow", "Burning", "Silent", "Broken", "Frozen", "Endless",
+    "Waking", "Feral", "Sunken", "Distant", "Last", "Buried", "Open",
+]
+
+
+def suggest_titles(genre: str, mood: str, count: int = 3) -> list[str]:
+    """Generate evocative title suggestions based on genre/mood keywords."""
+    # Collect relevant word pools
+    nouns = list(_TITLE_DEFAULT)
+    keywords = [w.strip().lower() for w in f"{genre},{mood}".split(",") if w.strip()]
+    for kw in keywords:
+        for key, words in _TITLE_NOUNS.items():
+            if key in kw or kw in key:
+                nouns.extend(words)
+
+    # Deduplicate but keep order
+    seen = set()
+    unique_nouns = []
+    for n in nouns:
+        if n not in seen:
+            seen.add(n)
+            unique_nouns.append(n)
+    nouns = unique_nouns
+
+    titles = set()
+    attempts = 0
+    while len(titles) < count and attempts < 50:
+        attempts += 1
+        pattern = random.choice(_TITLE_PATTERNS)
+        noun = random.choice(nouns)
+        noun2 = random.choice(nouns)
+        adj = random.choice(_TITLE_ADJS)
+        title = pattern.format(noun=noun, noun2=noun2, adj=adj)
+        if noun != noun2 or "{noun2}" not in pattern:
+            titles.add(title)
+
+    return list(titles)[:count]
 
 
 # ---------------------------------------------------------------------------
@@ -145,7 +211,7 @@ def copy_to_clipboard(text: str) -> bool:
 class PromptPreview(Static):
     """Live prompt preview with char/word counts and action hints."""
 
-    def update_preview(self, prompt: str, lyrics: str, selections: dict) -> None:
+    def update_preview(self, title: str, prompt: str, lyrics: str, selections: dict) -> None:
         char_count = len(prompt)
         word_count = len(prompt.split()) if prompt.strip() else 0
         lyrics_lines = len([l for l in lyrics.strip().splitlines() if l.strip()]) if lyrics.strip() else 0
@@ -153,13 +219,17 @@ class PromptPreview(Static):
         char_color = "green" if char_count <= SUNO_CHAR_LIMIT else "red"
         word_color = "green" if word_count <= SUNO_WORD_LIMIT else "red"
 
-        lines = [
+        lines = []
+        if title:
+            lines.append(f"[bold]{title}[/bold]")
+            lines.append("")
+        lines.extend([
             "[bold underline]Style Prompt[/bold underline]",
             "",
             f"[{char_color}]{char_count}[/{char_color}]/{SUNO_CHAR_LIMIT} chars  |  "
             f"[{word_color}]{word_count}[/{word_color}]/{SUNO_WORD_LIMIT} words",
             "",
-        ]
+        ])
 
         # Show what's selected
         if selections.get("artists"):
@@ -366,6 +436,7 @@ class SunoBuilderApp(App):
     BINDINGS = [
         Binding("c", "copy_prompt", "Copy to clipboard", priority=True),
         Binding("e", "export_prompt", "Save to generated_prompts/", priority=True),
+        Binding("t", "suggest_titles", "Suggest titles", priority=True),
         Binding("x", "clear_all", "Clear all", priority=True),
         Binding("escape", "go_back", "Back"),
         Binding("q", "quit", "Quit"),
@@ -398,6 +469,10 @@ class SunoBuilderApp(App):
             with Vertical(id="middle-panel"):
                 yield SelectionInfo(id="selection-info")
                 with VerticalScroll(id="form-area"):
+                    yield FieldLabel("[bold]Song Title[/bold]  [dim]t: suggest titles[/dim]", classes="field-label")
+                    yield Label("", id="title-suggestions", classes="field-hint")
+                    yield Input(placeholder="e.g. Concrete Hymn, Hollowed Out, The Weight of Static", id="title-input")
+
                     yield FieldLabel("[bold]Genre(s)[/bold]", classes="field-label")
                     yield Label(
                         f"[dim]{', '.join(self._db_genres[:10])}{'...' if len(self._db_genres) > 10 else ''}[/dim]",
@@ -444,7 +519,7 @@ class SunoBuilderApp(App):
             with VerticalScroll(id="preview-panel"):
                 yield PromptPreview(id="prompt-preview")
 
-        yield Static("Tab: next field | Enter: select | Esc: back | c: copy | e: save | x: clear", id="status-bar")
+        yield Static("Tab: next field | Enter: select | t: titles | c: copy | e: save | x: clear", id="status-bar")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -623,10 +698,11 @@ class SunoBuilderApp(App):
         }
 
     def _refresh_preview(self) -> None:
+        title = self.query_one("#title-input", Input).value.strip()
         prompt = self._build_prompt()
         lyrics = self.query_one("#lyrics-input", TextArea).text
         selections = self._get_selections_summary()
-        self.query_one("#prompt-preview", PromptPreview).update_preview(prompt, lyrics, selections)
+        self.query_one("#prompt-preview", PromptPreview).update_preview(title, prompt, lyrics, selections)
 
     # -- Events --------------------------------------------------------------
 
@@ -692,10 +768,13 @@ class SunoBuilderApp(App):
 
         PROMPTS_DIR.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filepath = PROMPTS_DIR / f"suno_prompt_{timestamp}.md"
+        title = self.query_one("#title-input", Input).value.strip()
+        slug = title.lower().replace(" ", "_")[:30] if title else "untitled"
+        filepath = PROMPTS_DIR / f"{slug}_{timestamp}.md"
 
+        header = f"# {title}" if title else "# Untitled"
         lines = [
-            "# Suno Style Prompt",
+            header,
             "",
             f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             f"Characters: {len(prompt)} / {SUNO_CHAR_LIMIT}",
@@ -715,6 +794,13 @@ class SunoBuilderApp(App):
             lines.append("")
             for a in self._selected_albums:
                 lines.append(f"- {a.get('year', '?')} - {a['title']}")
+            lines.append("")
+
+        # Title in Suno
+        if title:
+            lines.append("## Title")
+            lines.append("")
+            lines.append(f"> Paste into Suno's **title** field: **{title}**")
             lines.append("")
 
         # Field values
@@ -770,6 +856,16 @@ class SunoBuilderApp(App):
         filepath.write_text("\n".join(lines), encoding="utf-8")
         rel = filepath.relative_to(PROJECT_ROOT)
         self._set_status(f"[green]Saved to {rel} \u2014 prompt is at the bottom of the file.[/green]")
+
+    def action_suggest_titles(self) -> None:
+        if self._is_input_focused():
+            return
+        genre = self.query_one("#genre-input", Input).value.strip()
+        mood = self.query_one("#mood-input", Input).value.strip()
+        titles = suggest_titles(genre, mood, count=3)
+        suggestions_text = f"[dim]Suggestions: [bold]{'[/bold]  |  [bold]'.join(titles)}[/bold][/dim]"
+        self.query_one("#title-suggestions", Label).update(suggestions_text)
+        self._set_status("Title suggestions generated. Type one in or press t again for more.")
 
     def action_clear_all(self) -> None:
         if self._is_input_focused():

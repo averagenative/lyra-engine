@@ -40,6 +40,13 @@ A file-based lyrics and style reference engine in markdown, optimized for AI/age
 - `python3 scripts/suno_builder.py` — interactive Suno prompt builder with live preview
 - Requires: `GENIUS_API_TOKEN` env var, `pip install -r requirements.txt`
 
+## When an Artist Isn't in the Database
+If the user references an artist that isn't in `artists/`, offer to fetch them:
+- `python3 scripts/fetch.py artist "Artist Name"` — fetches discography + lyrics
+- `python3 scripts/fetch.py artist "Artist Name" --albums-only` — quick scaffold without lyrics
+- After fetching, run `python3 scripts/fetch.py enrich "Artist Name"` to populate mood/style/energy/themes
+- If you know the artist's style well enough, you can proceed without fetching — but note that you won't have their actual lyrics or suno_style_description to reference.
+
 ## Guides (for song creation)
 - `guides/SUNO_PROMPT_GUIDE.md` — How to generate Suno style prompts from this database. Prompt structure, artist-to-description translations, meta-tags, technical notes.
 - `guides/LYRICIST_GUIDE.md` — How to use this database for writing lyrics. Style analysis patterns, 7-question song design interview, blending styles, end-to-end workflow.
