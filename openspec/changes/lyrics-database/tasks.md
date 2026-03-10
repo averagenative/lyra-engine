@@ -125,7 +125,7 @@
 > Delivers: Richer artist bios, album reviews, and style descriptions for better Suno prompt generation.
 
 - [x] 10.1 Research AllMusic data access — **no public API**. Heavy anti-bot protections (Cloudflare, dynamic rendering). Web scraping is fragile and not recommended for automated ingestion. Manual reference only.
-- [ ] 10.2 Add AllMusic scraper to ingestion pipeline — **deferred** (no reliable API/scraping path)
-- [ ] 10.3 Add album review summaries from AllMusic to `_album.md` — **deferred** (depends on 10.2)
+- [~] 10.2 Add AllMusic scraper to ingestion pipeline — **future** (no public API; revisit if AllMusic opens an API or a reliable scraping method is found)
+- [~] 10.3 Add album review summaries from AllMusic to `_album.md` — **future** (blocked on 10.2)
 - [x] 10.4 Evaluate Discogs API — **viable**. Free public API with OAuth (discogs.com/developers). Provides genres, styles, tracklists, label info, artist profiles. Rate limit: 60 req/min authenticated.
 - [x] 10.5 Add lyrics URL fallback — `web_search_lyrics()` tries AZLyrics URL patterns, `scrape_lyrics_from_url()` handles AZLyrics/MetroLyrics/generic sites. Auto-triggered in `cmd_song` and `cmd_missing --retry`.
