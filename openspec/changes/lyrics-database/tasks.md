@@ -97,8 +97,8 @@
 
 - [x] 8.1 Create `scripts/tui.py` — textual-based TUI for browsing artists → albums → tracks → lyrics with genre search/filter
 - [x] 8.2 Add genre/mood filter — type `genre:doom` in search to filter artists by genre tags
-- [ ] 8.3 Add songwriting session mode — walks through the 7-question interview, pulls reference material, generates output
-- [ ] 8.4 Add Suno prompt builder — interactive prompt construction with genre/mood/instrument selection from database vocabulary
+- [x] 8.3 Add songwriting session mode — press `s` in TUI, walks through 7-question interview, shows style references from database, export with `e` to sessions/ directory
+- [x] 8.4 Add Suno prompt builder — standalone `scripts/suno_builder.py` TUI with live preview, char/word count, genre/mood/energy selection, reference artist lookup, clipboard copy (`c`), export (`e`)
 
 ## 9. Artist Relationships & Discovery (P2)
 
@@ -108,8 +108,8 @@
 - [x] 9.1 Add MusicBrainz artist relationships to ingestion — fetch members, external links (AllMusic, Last.fm, Discogs, Metal Archives, RYM URLs)
 - [x] 9.2 Store relationships in `_artist.md` frontmatter — `members` list, external link URLs. New artists auto-populate on fetch.
 - [x] 9.3 Create `fetch.py similar "Artist"` command — query MusicBrainz for artists sharing niche tags, show which are in the database
-- [ ] 9.4 Create `fetch.py suggest` command — analyze genre/mood patterns across the database and suggest artists that would fill gaps or complement existing collection
-- [ ] 9.5 Add relationship graph to `_index.md` — show connections between artists in the database (shared genres, influence chains)
+- [x] 9.4 Create `fetch.py suggest` command — analyze genre/mood patterns across the database and suggest artists that would fill gaps or complement existing collection. Filters "Various Artists"/unknown, requires score >= 50.
+- [x] 9.5 Add Genre Map and Shared Tags sections to `_index.md` — groups artists by primary genre, finds pairs sharing niche tags (excludes generic/mood tags)
 
 ## 10. Documentation & README (P1)
 
@@ -124,8 +124,8 @@
 > Goal: Enrich the database with data from additional sources beyond MusicBrainz and Genius.
 > Delivers: Richer artist bios, album reviews, and style descriptions for better Suno prompt generation.
 
-- [ ] 10.1 Research AllMusic data access — no public API, evaluate web scraping feasibility for artist bios, styles, moods, and album reviews
-- [ ] 10.2 Add AllMusic scraper to ingestion pipeline — fetch artist bio, styles, moods, and store in `_artist.md` frontmatter (`allmusic_bio`, `allmusic_styles`, `allmusic_moods`)
-- [ ] 10.3 Add album review summaries from AllMusic to `_album.md` — useful for understanding production and sonic character
-- [ ] 10.4 Evaluate Discogs API (has a public API with OAuth) — genres, styles, tracklists, label info
+- [x] 10.1 Research AllMusic data access — **no public API**. Heavy anti-bot protections (Cloudflare, dynamic rendering). Web scraping is fragile and not recommended for automated ingestion. Manual reference only.
+- [ ] 10.2 Add AllMusic scraper to ingestion pipeline — **deferred** (no reliable API/scraping path)
+- [ ] 10.3 Add album review summaries from AllMusic to `_album.md` — **deferred** (depends on 10.2)
+- [x] 10.4 Evaluate Discogs API — **viable**. Free public API with OAuth (discogs.com/developers). Provides genres, styles, tracklists, label info, artist profiles. Rate limit: 60 req/min authenticated.
 - [ ] 10.5 Add lyrics URL fallback — when Genius fails, search alternative lyrics sites (AZLyrics, MetroLyrics) via web search

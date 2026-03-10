@@ -1,7 +1,9 @@
 """Markdown/frontmatter generation for all file types."""
 
 import os
+from collections import defaultdict
 from datetime import date
+from itertools import combinations
 from pathlib import Path
 
 import yaml
@@ -191,19 +193,38 @@ def update_tags(path: Path, tags: list[str]):
 
 def write_index():
     """Regenerate _index.md by scanning for _artist.md files."""
+    # Generic tags too broad to be interesting for the Shared Tags section
+    _GENERIC_TAGS = {
+        "rock", "metal", "pop", "electronic", "hip hop", "jazz", "blues",
+        "country", "folk", "punk", "classical", "soul", "r&b", "reggae",
+        "latin", "world", "experimental", "indie", "alternative",
+        "singer-songwriter", "instrumental", "acoustic", "hardcore",
+        "american", "british", "canadian",
+    }
+
     artists = []
+    # Map: artist name -> {genre, tags}
+    artist_data = {}
+
     for entry in sorted(DATABASE_ROOT.iterdir()):
         if entry.is_dir() and (entry / "_artist.md").exists():
-            # Read artist name from frontmatter
-            with open(entry / "_artist.md", encoding="utf-8") as f:
-                content = f.read()
-            # Quick parse: find name in frontmatter
-            name = entry.name  # fallback
-            for line in content.split("\n"):
-                if line.startswith("name:"):
-                    name = line.split(":", 1)[1].strip().strip("'\"")
-                    break
+            fm, _ = read_md(entry / "_artist.md")
+            name = fm.get("name", entry.name)
             artists.append((name, entry.name))
+
+            genre_str = fm.get("genre", "")
+            primary_genre = ""
+            if genre_str:
+                primary_genre = genre_str.split(",")[0].strip()
+
+            mb_tags = fm.get("musicbrainz_tags", [])
+            if not isinstance(mb_tags, list):
+                mb_tags = []
+
+            artist_data[name] = {
+                "primary_genre": primary_genre,
+                "tags": set(t.lower() for t in mb_tags),
+            }
 
     frontmatter = {
         "type": "index",
@@ -214,5 +235,36 @@ def write_index():
     lines = ["# Lyra Engine", "", "## Artists"]
     for name, dirname in artists:
         lines.append(f"- [{name}]({dirname}/_artist.md)")
+
+    # --- Genre Map ---
+    genre_map = defaultdict(list)
+    for name, data in artist_data.items():
+        pg = data["primary_genre"]
+        if pg:
+            genre_map[pg].append(name)
+
+    if genre_map:
+        lines.extend(["", "## Genre Map"])
+        for genre in sorted(genre_map):
+            lines.append(f"")
+            lines.append(f"### {genre}")
+            for artist_name in sorted(genre_map[genre]):
+                lines.append(f"- {artist_name}")
+
+    # --- Shared Tags ---
+    # Find pairs of artists that share at least one niche tag
+    shared_pairs = []
+    artist_names = sorted(artist_data.keys())
+    for a, b in combinations(artist_names, 2):
+        niche_a = artist_data[a]["tags"] - _GENERIC_TAGS - _MOOD_TAGS
+        niche_b = artist_data[b]["tags"] - _GENERIC_TAGS - _MOOD_TAGS
+        common = niche_a & niche_b
+        if common:
+            shared_pairs.append((a, b, sorted(common)))
+
+    if shared_pairs:
+        lines.extend(["", "## Shared Tags"])
+        for a, b, tags in sorted(shared_pairs):
+            lines.append(f"- {a}, {b}: {', '.join(tags)}")
 
     _write_md(DATABASE_ROOT / "_index.md", frontmatter, "\n".join(lines))

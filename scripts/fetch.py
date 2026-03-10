@@ -629,6 +629,134 @@ def cmd_stats(args):
             print(f"  {tag:<35} {count:>5} songs")
 
 
+def cmd_suggest(args):
+    """Analyze database and suggest new artists based on genre gaps and diversity."""
+    from config import DATABASE_ROOT
+    from collections import Counter
+    import musicbrainzngs
+
+    # 1. Scan all artists, collect genre and tag data
+    db_artists = set()
+    genre_counter = Counter()
+    tag_counter = Counter()
+    artist_genres = {}
+
+    for artist_entry in sorted(DATABASE_ROOT.iterdir()):
+        artist_md = artist_entry / "_artist.md"
+        if not artist_entry.is_dir() or not artist_md.exists():
+            continue
+
+        fm, _ = read_md(artist_md)
+        artist_name = fm.get("name", artist_entry.name)
+        db_artists.add(artist_name.lower())
+
+        # Collect genre
+        genre = fm.get("genre", "")
+        if genre:
+            for g in [t.strip() for t in genre.split(",")]:
+                if g:
+                    genre_counter[g] += 1
+                    artist_genres.setdefault(g, []).append(artist_name)
+
+        # Collect musicbrainz_tags
+        mb_tags = fm.get("musicbrainz_tags", [])
+        if isinstance(mb_tags, str):
+            mb_tags = [t.strip() for t in mb_tags.split(",")]
+        if mb_tags:
+            for t in mb_tags:
+                t = t.strip()
+                if t:
+                    tag_counter[t] += 1
+
+    if not db_artists:
+        print("No artists found in database.")
+        return
+
+    print(f"{'='*60}")
+    print(f"GENRE DIVERSITY ANALYSIS")
+    print(f"{'='*60}")
+    print(f"\nArtists in database: {len(db_artists)}")
+
+    # 2. Well-covered genres (sorted by count descending)
+    print(f"\n{'─'*60}")
+    print(f"WELL-COVERED GENRES:")
+    well_covered = [(g, c) for g, c in genre_counter.most_common() if c >= 2]
+    if well_covered:
+        for g, c in well_covered:
+            names = ", ".join(artist_genres[g][:4])
+            extra = f" (+{c - 4} more)" if c > 4 else ""
+            print(f"  {g:<30} {c:>3} artists  ({names}{extra})")
+    else:
+        print("  (none — no genre has 2+ artists yet)")
+
+    # 3. Identify gap genres — genres that appear in tags but have few artists
+    # Combine genre and tag data; gap = appears in tags but has <=1 artist in genre_counter
+    all_known_tags = set(tag_counter.keys()) | set(genre_counter.keys())
+    gap_genres = []
+    for tag in all_known_tags:
+        artist_count = genre_counter.get(tag, 0)
+        if artist_count <= 1:
+            tag_mentions = tag_counter.get(tag, 0) + artist_count
+            if tag_mentions >= 1:
+                gap_genres.append((tag, artist_count, tag_mentions))
+
+    # Sort by tag mentions descending (most referenced but least covered)
+    gap_genres.sort(key=lambda x: (-x[2], x[0]))
+
+    print(f"\n{'─'*60}")
+    print(f"UNDER-REPRESENTED GENRES:")
+    if gap_genres:
+        for tag, artist_count, mentions in gap_genres[:20]:
+            status = f"{artist_count} artist(s)" if artist_count else "0 artists"
+            print(f"  {tag:<30} {status}, mentioned {mentions}x in tags")
+    else:
+        print("  (no gaps detected)")
+
+    # 4. Search MusicBrainz for artists in gap genres
+    print(f"\n{'─'*60}")
+    print(f"SUGGESTED ARTISTS TO ADD:")
+    print(f"{'─'*60}")
+
+    suggestions_found = 0
+    search_genres = [g for g, _, _ in gap_genres[:10]]  # Top 10 gap genres
+
+    if not search_genres:
+        print("  (no gap genres to search for)")
+    else:
+        for genre in search_genres:
+            try:
+                result = musicbrainzngs.search_artists(tag=genre, limit=10)
+            except Exception as e:
+                print(f"  [{genre}] Search error: {e}")
+                continue
+
+            candidates = []
+            for a in result.get("artist-list", []):
+                a_name = a["name"]
+                score = int(a.get("ext:score", 0))
+                if a_name.lower() in db_artists:
+                    continue
+                if score < 50:
+                    continue
+                # Filter out non-artist entries
+                if a_name.lower() in ("various artists", "[unknown]"):
+                    continue
+                candidates.append({
+                    "name": a_name,
+                    "country": a.get("country", "??"),
+                    "score": score,
+                })
+
+            if candidates:
+                print(f"\n  [{genre}]")
+                for c in candidates[:5]:
+                    suggestions_found += 1
+                    print(f"    {c['name']:<35} ({c['country']}, score: {c['score']})")
+
+    print(f"\n{'='*60}")
+    print(f"Total suggestions: {suggestions_found}")
+
+
 def cmd_index(args):
     """Regenerate the root index."""
     write_index()
@@ -692,6 +820,10 @@ def main():
     # stats subcommand
     p_stats = sub.add_parser("stats", help="Show database statistics (genres, moods, counts)")
     p_stats.set_defaults(func=cmd_stats)
+
+    # suggest subcommand
+    p_suggest = sub.add_parser("suggest", help="Suggest new artists based on genre gaps and diversity")
+    p_suggest.set_defaults(func=cmd_suggest)
 
     # index subcommand
     p_index = sub.add_parser("index", help="Regenerate root index")

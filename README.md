@@ -87,8 +87,25 @@ python scripts/fetch.py enrich "Sleep" --dry-run # preview only
 # Find similar artists via shared MusicBrainz tags
 python scripts/fetch.py similar "Crowbar"
 
+# Analyze genre gaps and suggest new artists to add
+python scripts/fetch.py suggest
+
 # Regenerate the root index
 python scripts/fetch.py index
+```
+
+### Interactive Tools
+
+```bash
+# Browse the database (artists → albums → tracks → lyrics)
+python scripts/tui.py
+
+# Start a songwriting session from the TUI: press 's'
+# Export session notes: press 'e'
+
+# Build a Suno-compatible style prompt interactively
+python scripts/suno_builder.py
+# Live preview with char/word count, copy to clipboard: 'c', export: 'e'
 ```
 
 ## Directory Structure
@@ -107,6 +124,8 @@ lyra-engine/
     markdown.py          # Frontmatter/markdown generation
     enrich.py            # Heuristic metadata enrichment
     config.py            # Path helpers, constants
+    tui.py               # Terminal UI browser
+    suno_builder.py      # Interactive Suno prompt builder
   agents/
     lyricist.md          # Lyricist agent persona
     producer.md          # Music producer / Suno prompt agent
@@ -115,6 +134,7 @@ lyra-engine/
     SUNO_PROMPT_GUIDE.md # Suno prompt rules, translations, techniques
     ARTIST_STYLE_TEMPLATE.md  # Template for writing Suno-safe descriptions
     ENRICHMENT_VOCABULARY.md  # Controlled vocabulary for metadata tags
+  sessions/              # Exported songwriting sessions (gitignored)
   artists/               # All fetched data (gitignored)
     _index.md
     {Artist}/
