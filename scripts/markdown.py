@@ -8,6 +8,28 @@ import yaml
 
 from config import DATABASE_ROOT
 
+# Known mood/descriptor tags (not genres) from MusicBrainz community tags
+_MOOD_TAGS = {
+    "atmospheric", "cold", "dark", "melancholic", "melancholy", "aggressive",
+    "heavy", "brutal", "intense", "ethereal", "dreamy", "hypnotic", "groovy",
+    "emotional", "existential", "futuristic", "introspective", "political",
+    "angry", "sad", "happy", "epic", "calm", "energetic", "psychedelic",
+    "lo-fi", "noisy", "ambient", "minimalist", "complex", "technical",
+    "melodic", "dissonant", "haunting", "uplifting", "somber", "raw",
+}
+
+
+def _classify_tags(tags: list[str]) -> tuple[list[str], list[str]]:
+    """Split MusicBrainz tags into genre tags and mood/descriptor tags."""
+    genres = []
+    moods = []
+    for tag in tags:
+        if tag.lower() in _MOOD_TAGS:
+            moods.append(tag)
+        else:
+            genres.append(tag)
+    return genres, moods
+
 
 def _write_md(path: Path, frontmatter: dict, body: str):
     """Write a markdown file with YAML frontmatter."""
@@ -26,19 +48,24 @@ def _write_md(path: Path, frontmatter: dict, body: str):
 
 def write_song(path: Path, title: str, artist: str, album: str, year: int,
                track_number: int, recording_id: str = "",
-               genius_url: str = "", lyrics: str | None = None):
+               genius_url: str = "", lyrics: str | None = None,
+               tags: list[str] | None = None):
     """Write a song .md file."""
+    # Separate genre tags from mood/descriptor tags
+    genre_tags, mood_tags = _classify_tags(tags or [])
+
     frontmatter = {
         "title": title,
         "artist": artist,
         "album": album,
         "year": year,
         "track_number": track_number,
-        "genre": "",
-        "mood": "",
+        "genre": ", ".join(genre_tags) if genre_tags else "",
+        "mood": ", ".join(mood_tags) if mood_tags else "",
         "themes": [],
         "style": "",
         "energy": "",
+        "musicbrainz_tags": tags or [],
         "musicbrainz_recording_id": recording_id,
         "genius_url": genius_url or "",
         "fetched_at": str(date.today()),
@@ -50,9 +77,12 @@ def write_song(path: Path, title: str, artist: str, album: str, year: int,
 
 def write_album(path: Path, title: str, artist: str, year: int,
                 release_type: str, tracks: list[dict],
-                release_group_id: str = "", tracks_missing_lyrics: int = 0):
+                release_group_id: str = "", tracks_missing_lyrics: int = 0,
+                tags: list[str] | None = None):
     """Write an _album.md file."""
     album_path = path / "_album.md"
+
+    genre_tags, mood_tags = _classify_tags(tags or [])
 
     frontmatter = {
         "type": "album",
@@ -60,6 +90,9 @@ def write_album(path: Path, title: str, artist: str, year: int,
         "artist": artist,
         "year": year,
         "release_type": release_type,
+        "genre": ", ".join(genre_tags) if genre_tags else "",
+        "mood": ", ".join(mood_tags) if mood_tags else "",
+        "musicbrainz_tags": tags or [],
         "track_count": len(tracks),
         "musicbrainz_release_group_id": release_group_id,
         "fetched_at": str(date.today()),
@@ -75,7 +108,8 @@ def write_album(path: Path, title: str, artist: str, year: int,
 
 
 def write_artist(path: Path, name: str, artist_id: str, country: str,
-                 life_span: dict, discography: list[dict]):
+                 life_span: dict, discography: list[dict],
+                 tags: list[str] | None = None):
     """Write an _artist.md file."""
     artist_path = path / "_artist.md"
 
@@ -83,11 +117,16 @@ def write_artist(path: Path, name: str, artist_id: str, country: str,
     end = life_span.get("end", "present")
     active = f"{begin}-{end}" if begin else ""
 
+    genre_tags, mood_tags = _classify_tags(tags or [])
+
     frontmatter = {
         "type": "artist",
         "name": name,
         "musicbrainz_artist_id": artist_id,
-        "genres": [],
+        "genre": ", ".join(genre_tags) if genre_tags else "",
+        "mood": ", ".join(mood_tags) if mood_tags else "",
+        "musicbrainz_tags": tags or [],
+        "suno_style_description": "",
         "country": country,
         "active_years": active,
         "fetched_at": str(date.today()),

@@ -10,8 +10,12 @@ musicbrainzngs.set_useragent("lyrics-database", "0.1", "https://github.com/examp
 DEFAULT_TYPES = ["album", "ep"]
 
 
-def search_artist(name: str) -> dict | None:
-    """Search for an artist by name. Returns top match or None."""
+def search_artist(name: str, interactive: bool = True) -> dict | None:
+    """Search for an artist by name. Returns top match or None.
+
+    If interactive=True, shows top matches and asks for confirmation
+    when the match is ambiguous.
+    """
     result = musicbrainzngs.search_artists(artist=name, limit=5)
     artists = result.get("artist-list", [])
     if not artists:
@@ -20,15 +24,74 @@ def search_artist(name: str) -> dict | None:
 
     top = artists[0]
     score = int(top.get("ext:score", 0))
-    if score < 80:
+
+    # Show match details for verification
+    if interactive and (score < 95 or top["name"].lower() != name.lower()):
+        print(f"\nSearch: '{name}'")
+        print(f"Top matches from MusicBrainz:")
+        for i, a in enumerate(artists[:5]):
+            s = int(a.get("ext:score", 0))
+            disambiguation = a.get("disambiguation", "")
+            country = a.get("country", "??")
+            life = a.get("life-span", {})
+            begin = life.get("begin", "?")
+            extra = f" ({disambiguation})" if disambiguation else ""
+            print(f"  {i+1}. {a['name']}{extra} [{country}] (active: {begin}) [score: {s}]")
+        print()
+
+        response = input(f"Use '{top['name']}'? [Y/n/1-5]: ").strip()
+        if response.lower() == 'n':
+            return None
+        if response in ('2', '3', '4', '5') and int(response) <= len(artists):
+            top = artists[int(response) - 1]
+        # Default (enter, 'y', '1') uses top match
+
+    elif score < 80:
         print(f"Warning: best match '{top['name']}' has low score ({score})", file=sys.stderr)
+
+    # Fetch tags for the artist
+    try:
+        artist_detail = musicbrainzngs.get_artist_by_id(top["id"], includes=["tags"])
+        tags = artist_detail["artist"].get("tag-list", [])
+        # Filter to high-confidence tags (count >= 2) sorted by vote count
+        genre_tags = sorted(
+            [t for t in tags if int(t["count"]) >= 1],
+            key=lambda t: -int(t["count"])
+        )
+    except Exception:
+        genre_tags = []
 
     return {
         "id": top["id"],
         "name": top["name"],
         "country": top.get("country", ""),
         "life_span": top.get("life-span", {}),
+        "tags": [t["name"] for t in genre_tags],
     }
+
+
+def get_release_group_tags(release_group_id: str, min_count: int = 1) -> list[str]:
+    """Fetch community tags for a release group (album). Returns tag names."""
+    try:
+        rg = musicbrainzngs.get_release_group_by_id(release_group_id, includes=["tags"])
+        tags = rg["release-group"].get("tag-list", [])
+        return [t["name"] for t in sorted(tags, key=lambda t: -int(t["count"]))
+                if int(t["count"]) >= min_count]
+    except Exception:
+        return []
+
+
+def get_recording_tags(recording_id: str, min_count: int = 1) -> list[str]:
+    """Fetch community tags for a recording (song). Returns tag names."""
+    if not recording_id:
+        return []
+    try:
+        rec = musicbrainzngs.get_recording_by_id(recording_id, includes=["tags"])
+        tags = rec["recording"].get("tag-list", [])
+        return [t["name"] for t in sorted(tags, key=lambda t: -int(t["count"]))
+                if int(t["count"]) >= min_count]
+    except Exception:
+        return []
 
 
 def get_discography(artist_id: str, types: list[str] | None = None,

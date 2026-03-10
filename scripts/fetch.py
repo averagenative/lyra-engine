@@ -9,7 +9,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import artist_dir, album_dir, song_path
-from musicbrainz import search_artist, get_discography, get_tracklist
+from musicbrainz import search_artist, get_discography, get_tracklist, get_release_group_tags, get_recording_tags
 from markdown import write_song, write_album, write_artist, write_index
 from lyrics import fetch_lyrics, init_genius
 
@@ -55,8 +55,11 @@ def cmd_artist(args):
     # Write artist metadata
     a_dir = artist_dir(name)
     write_artist(a_dir, name, artist_info["id"], artist_info["country"],
-                 artist_info["life_span"], discography)
+                 artist_info["life_span"], discography,
+                 tags=artist_info.get("tags", []))
     print(f"\nWrote {a_dir / '_artist.md'}")
+    if artist_info.get("tags"):
+        print(f"  Tags: {', '.join(artist_info['tags'][:8])}")
 
     # Initialize Genius if we need lyrics
     if not args.albums_only:
@@ -77,6 +80,11 @@ def cmd_artist(args):
             print("  No tracks found, skipping.", file=sys.stderr)
             continue
 
+        # Fetch album-level tags
+        album_tags = get_release_group_tags(album["release_group_id"])
+        if album_tags:
+            print(f"  Tags: {', '.join(album_tags[:6])}")
+
         al_dir = album_dir(name, album["year"], album["title"])
         missing_lyrics = 0
 
@@ -93,6 +101,9 @@ def cmd_artist(args):
 
             lyrics_text = None
             genius_url = ""
+
+            # Fetch per-song tags from MusicBrainz
+            song_tags = get_recording_tags(track["recording_id"])
 
             if not args.albums_only:
                 print(f"  {track['track_number']:2d}/{len(tracks)} {track['title']} ... ", end="", flush=True)
@@ -113,13 +124,15 @@ def cmd_artist(args):
                        album["year"], track["track_number"],
                        recording_id=track["recording_id"],
                        genius_url=genius_url or "",
-                       lyrics=lyrics_text)
+                       lyrics=lyrics_text,
+                       tags=song_tags or album_tags)
 
         # Write album metadata
         write_album(al_dir, album["title"], name, album["year"],
                     album["type"], tracks,
                     release_group_id=album["release_group_id"],
-                    tracks_missing_lyrics=missing_lyrics)
+                    tracks_missing_lyrics=missing_lyrics,
+                    tags=album_tags)
 
     # Regenerate index
     write_index()
@@ -180,6 +193,11 @@ def cmd_album(args):
         print("No tracks found.", file=sys.stderr)
         sys.exit(1)
 
+    # Fetch album-level tags
+    album_tags = get_release_group_tags(match["release_group_id"])
+    if album_tags:
+        print(f"  Tags: {', '.join(album_tags[:6])}")
+
     al_dir = album_dir(name, match["year"], match["title"])
     missing = 0
 
@@ -190,6 +208,8 @@ def cmd_album(args):
         if not args.force and has_lyrics(s_path):
             print(f"  {track['track_number']:2d}. {track['title']} [skipped]")
             continue
+
+        song_tags = get_recording_tags(track["recording_id"])
 
         print(f"  {track['track_number']:2d}. {track['title']} ... ", end="", flush=True)
         lyrics_text, genius_url = fetch_lyrics(name, track["title"])
@@ -203,19 +223,22 @@ def cmd_album(args):
                    match["year"], track["track_number"],
                    recording_id=track["recording_id"],
                    genius_url=genius_url or "",
-                   lyrics=lyrics_text)
+                   lyrics=lyrics_text,
+                   tags=song_tags or album_tags)
 
     write_album(al_dir, match["title"], name, match["year"],
                 match["type"], tracks,
                 release_group_id=match["release_group_id"],
-                tracks_missing_lyrics=missing)
+                tracks_missing_lyrics=missing,
+                tags=album_tags)
 
     # Ensure artist file exists
     a_dir = artist_dir(name)
     if not (a_dir / "_artist.md").exists():
         write_artist(a_dir, name, artist_info["id"], artist_info["country"],
                      artist_info["life_span"],
-                     [match])
+                     [match],
+                     tags=artist_info.get("tags", []))
 
     write_index()
     print(f"\nDone: {len(tracks)} tracks, {missing} missing lyrics.")
