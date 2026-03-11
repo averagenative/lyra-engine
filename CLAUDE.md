@@ -39,6 +39,9 @@ A file-based lyrics and style reference engine in markdown, optimized for AI/age
 - `python3 scripts/tui.py` — interactive TUI browser (press `s` for songwriting session)
 - `python3 scripts/suno_builder.py` — interactive Suno prompt builder with live preview
 - Requires: `GENIUS_API_TOKEN` env var, `pip install -r requirements.txt`
+- Set the token via one of:
+  - Project `.env` file: `echo 'GENIUS_API_TOKEN=your-token' >> .env` (gitignored, auto-loaded by scripts)
+  - Shell profile: `export GENIUS_API_TOKEN=your-token` in `~/.bashrc` or `~/.zshrc`
 
 ## When an Artist Isn't in the Database
 If the user references an artist that isn't in `artists/`, offer to fetch them:
@@ -62,17 +65,21 @@ If the user references an artist that isn't in `artists/`, offer to fetch them:
 - `python3 scripts/mcp_server.py` — run the MCP server (stdio transport)
 - Exposes 13 tools: `list_artists`, `get_artist`, `get_album`, `get_song`, `search_songs`, `get_stats`, `fetch_artist`, `fetch_album`, `enrich_artist`, `find_similar_artists`, `list_missing`, `get_suno_style`, `get_vocabulary`
 - Exposes 3 resources: `lyra://guides/suno-prompt`, `lyra://guides/lyricist`, `lyra://index`
-- Add to Claude Code config (`~/.claude/settings.json`):
+- Add to Claude Code MCP config (`~/.claude/mcp.json`):
   ```json
   {
     "mcpServers": {
       "lyra-engine": {
         "command": "/home/dmichael/projects/lyra-engine/.venv/bin/python",
-        "args": ["/home/dmichael/projects/lyra-engine/scripts/mcp_server.py"]
+        "args": ["/home/dmichael/projects/lyra-engine/scripts/mcp_server.py"],
+        "env": {
+          "GENIUS_API_TOKEN": "your-token-here"
+        }
       }
     }
   }
   ```
+- The `GENIUS_API_TOKEN` env var is required for fetch/enrich tools; read-only tools (browse, search, stats) work without it
 
 ## Conventions
 - Plain text lyrics, no HTML
