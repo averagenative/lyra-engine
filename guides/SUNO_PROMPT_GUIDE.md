@@ -189,6 +189,43 @@ ffmpeg -i input.wav -c:a libmp3lame -b:a 320k output.mp3
 ffmpeg -i input.mp3 output.wav
 ```
 
+## Hard Lessons: Heavy/Extreme Metal Prompts
+
+These patterns were discovered through extensive trial and error generating groove metal / extreme metal tracks (March 2026).
+
+### Style Prompt Pitfalls
+
+- **Keep style prompts short and blunt** — the more descriptive words you give Suno, the more it cherry-picks the wrong ones and drifts
+- **Explicit negatives matter** — "No melody, no clean singing, no rap, no spoken word" actively prevents drift. Without them, Suno will sneak in melodic passages
+- **"Tribal" triggers Soulfly/Sepultura world-music percussion** — use "mechanical" or "relentless" instead for heavy drumming
+- **"Nine-piece chaotic energy" or anything Slipknot-adjacent** triggers nu-metal rap-rock vocal delivery
+- **"Scandinavian extreme metal"** can overcorrect into black metal shrieks — be specific about what vocal style you want
+- **"Gang-vocal chants"** — Suno reads "chants" as singalong/melodic. Drop it or say "shouted group vocals"
+- **Dynamic arc language** ("building to", "menacing stomp building to explosive") gives Suno permission to create melodic shape and go radio-rock. Cut it for heavy genres
+- **"Anthemic"** will make anything sound like arena rock. Avoid for extreme metal
+
+### Lyric Pitfalls That Cause Vocal Style Drift
+
+- **Too many syllables per line → rap cadence** — if lines are dense/wordy (8+ syllables strung together with internal rhyme), Suno defaults to rap-rock delivery to fit them in
+- **Iambic meter → sing-song/butt-rock** — lines with steady da-DUM da-DUM da-DUM rhythm get sung like Nickelback. Break the meter with uneven line lengths and hard consonant clusters
+- **Poetic/literary language → radio rock** — clean metaphors and complete sentences sound "pretty" to Suno. Use fragmented, visceral, first-person language instead
+- **Multi-syllable words in breakdowns → electronic/bouncy** — "Complicit in the turning" went electronic. Single-word barks ("Kneel / Crawl / Bleed / FALL") are Suno-proof
+- **Political commentary voice → spoken word/rap** — observational third-person political lyrics trigger speech-like delivery. First-person body-horror/visceral voice stays screamed
+
+### What Works for Extreme Metal
+
+- **Short style prompt** (~60-80 words), blunt genre terms, explicit negatives
+- **4-6 syllables per line** in verses — fragments, not sentences
+- **Broken meter** — alternate between short and long lines, no steady rhythm
+- **Hard consonants** — "stripped", "gorged", "chokes", "scrape" — ugly mouth-feel that can't be sung pretty
+- **First-person visceral voice** — "I can feel it in the walls" not "The empire crumbles"
+- **Single-word or two-word breakdowns** — least room for Suno to improvise wrong
+- **Explicit language helps** — "fuck" and "shit" anchor Suno in aggressive vocal delivery
+
+### Example: Working Extreme Groove Metal Prompt
+
+> Extreme low-tuned 8-string groove metal. Polyrhythmic palm-muted chugging, mechanical double bass drums, dissonant angular guitar riffs. Harsh screamed male vocals, guttural and abrasive throughout. No melody, no clean singing, no rap, no spoken word. Industrial percussion hits. Claustrophobic wall-of-sound production. Mathematical rhythmic complexity. Mid-tempo crushing heaviness. Diminished minor key. 105-115 BPM.
+
 ## Suno Technical Notes
 
 - **Model**: v5 (Sep 2025) — 44.1kHz stereo, superior prompt adherence
