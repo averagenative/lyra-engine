@@ -58,6 +58,22 @@ If the user references an artist that isn't in `artists/`, offer to fetch them:
 4. Generate Suno style prompt (see SUNO_PROMPT_GUIDE.md) — no artist names, under 180 words
 5. Paste into Suno, iterate
 
+## MCP Server
+- `python3 scripts/mcp_server.py` — run the MCP server (stdio transport)
+- Exposes 13 tools: `list_artists`, `get_artist`, `get_album`, `get_song`, `search_songs`, `get_stats`, `fetch_artist`, `fetch_album`, `enrich_artist`, `find_similar_artists`, `list_missing`, `get_suno_style`, `get_vocabulary`
+- Exposes 3 resources: `lyra://guides/suno-prompt`, `lyra://guides/lyricist`, `lyra://index`
+- Add to Claude Code config (`~/.claude/settings.json`):
+  ```json
+  {
+    "mcpServers": {
+      "lyra-engine": {
+        "command": "/home/dmichael/projects/lyra-engine/.venv/bin/python",
+        "args": ["/home/dmichael/projects/lyra-engine/scripts/mcp_server.py"]
+      }
+    }
+  }
+  ```
+
 ## Conventions
 - Plain text lyrics, no HTML
 - One line per lyric line, blank line between sections
