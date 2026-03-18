@@ -226,6 +226,66 @@ These patterns were discovered through extensive trial and error generating groo
 
 > Extreme low-tuned 8-string groove metal. Polyrhythmic palm-muted chugging, mechanical double bass drums, dissonant angular guitar riffs. Harsh screamed male vocals, guttural and abrasive throughout. No melody, no clean singing, no rap, no spoken word. Industrial percussion hits. Claustrophobic wall-of-sound production. Mathematical rhythmic complexity. Mid-tempo crushing heaviness. Diminished minor key. 105-115 BPM.
 
+## Suno Generation Settings
+
+Beyond the style prompt, Suno exposes three settings that significantly shape output. These interact with the style prompt and should be tuned together.
+
+### Weirdness (0-100%)
+
+Controls how much Suno deviates from conventional song structure, melody, and arrangement.
+
+| Range | Effect | Best For |
+|-------|--------|----------|
+| 0-20% | Very conventional, predictable | Pop, radio rock, anything that needs to sound "normal" |
+| 25-40% | Slight edge, minor surprises | Hard rock, metal, post-grunge — structured but not sterile |
+| 40-55% | Noticeable experimentation | Progressive, industrial, sludge — room for texture and chaos |
+| 55-75% | Significant deviation | Experimental, noise rock, avant-garde — expect the unexpected |
+| 75-100% | Full chaos | Ambient, drone, sound design — less "song," more "experience" |
+
+**Key insight**: Low weirdness + heavy style prompt can produce overly clean, "default singer" results even for aggressive genres. If the output sounds too polished or commercial, bump weirdness up 10-15% before rewriting the prompt.
+
+### Style Influence (0-100%)
+
+Controls how strongly Suno follows your style prompt vs. its own interpretation.
+
+| Range | Effect | Best For |
+|-------|--------|----------|
+| 0-30% | Style prompt is a loose suggestion | When you want Suno to surprise you |
+| 35-50% | Balanced — Suno follows the vibe but improvises | General use, first attempts |
+| 50-70% | Strong adherence to your descriptors | Specific genre targets, when your prompt is dialed in |
+| 70-85% | Very literal interpretation | Niche genres, precise production goals |
+| 85-100% | Maximum control | When you know exactly what you want and the prompt is proven |
+
+**Key insight**: High style influence only works well with a good prompt. A vague prompt at 80% influence will produce repetitive, flat results. A specific prompt at 80% will lock in exactly what you want.
+
+### Exclude Styles
+
+A comma-separated list of styles/genres Suno should actively avoid. This is often more effective than trying to describe what you want — it removes the failure modes.
+
+**Common exclusion sets by target genre:**
+
+| Target Sound | Exclude |
+|--------------|---------|
+| Heavy metal / hard rock | pop, electronic, synth, jazz, funk, country |
+| Raw / aggressive metal | pop rock, radio rock, arena rock, melodic, clean vocals |
+| Industrial / dark | acoustic, folk, bright, upbeat, cheerful |
+| Lo-fi / raw production | polished, hi-fi, overproduced, commercial |
+| Extreme metal | melodic, singing, rap, spoken word, clean |
+
+**Key insight**: If Suno keeps drifting toward a "default" vocal delivery or production style, exclusions are often the fastest fix. Adding `pop rock, radio rock, melodic` eliminates the most common drift targets for heavy genres.
+
+### Settings Interaction
+
+These three settings interact — here are proven combinations:
+
+| Goal | Weirdness | Style Influence | Exclusions |
+|------|-----------|-----------------|------------|
+| Clean radio rock | 15-25% | 50-60% | experimental, noise, lo-fi |
+| Early 2000s metal | 35-45% | 60-70% | pop rock, radio rock, arena rock, melodic |
+| Raw sludge / doom | 45-55% | 55-65% | pop, melodic, clean, bright |
+| Experimental / industrial | 55-70% | 65-75% | pop, acoustic, folk, country |
+| Extreme metal | 40-50% | 70-80% | melodic, singing, rap, spoken word, clean |
+
 ## Suno Technical Notes
 
 - **Model**: v5 (Sep 2025) — 44.1kHz stereo, superior prompt adherence
