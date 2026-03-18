@@ -83,20 +83,32 @@ If the user references an artist that isn't in `artists/`, offer to fetch them:
 
 ## Additional Research (Artist Deep Dives)
 
-Say `"additional research for [Artist]"` to trigger a deep instrumental/guitar research workflow. This goes beyond what's in the database and produces:
+Say `"additional research for [Artist]"` to trigger a deep research workflow covering all key instruments. This goes beyond what's in the database and produces:
 
+### Guitar
 1. **Guitar interplay** — how multiple guitarists interact (harmony, counterpoint, textural contrast)
 2. **Signature riff characteristics** — picking technique, palm muting, tuning, scales/modes, rhythmic patterns
 3. **Tone and gear** — amp voicing, EQ approach, gain structure, effects
-4. **Rhythm section integration** — how guitars lock with drums, kick synchronization
-5. **Vocal style details** — delivery, range, effects, section-by-section variation
-6. **Key song examples** showcasing each technique
-7. **Suno prompt translation** — all findings converted to Suno-safe descriptive language (no artist names), with recommended Weirdness, Style Influence, and Exclude Styles settings
 
-Results are saved to Claude memory as `reference_[artist]_guitar.md` so they compound across sessions. Completed deep dives so far:
+### Drums
+4. **Drumming style** — stick technique, kick patterns (single/double/trigger), snare tone and placement
+5. **Rhythmic approach** — polyrhythmic vs straight, odd time signatures, tempo tendencies, cymbal work
+6. **Feel and dynamics** — mechanical precision vs loose groove, how the drummer shapes energy across sections
+
+### Vocals
+7. **Vocal range and technique** — clean vs harsh ratio, screaming technique (fry, false cord, guttural), register shifts
+8. **Delivery and cadence** — how vocals sit rhythmically (on-beat, syncopated, percussive), lyrical phrasing patterns
+9. **Section variation** — how vocal approach changes between verse/chorus/breakdown, mic technique, effects
+
+### Integration & Translation
+10. **Rhythm section integration** — how guitars, drums, and vocals lock together as a unit
+11. **Key song examples** showcasing each technique
+12. **Suno prompt translation** — all findings converted to Suno-safe descriptive language (no artist names), with recommended Weirdness, Style Influence, and Exclude Styles settings
+
+Results are saved to Claude memory as `reference_[artist]_deep_dive.md` so they compound across sessions. Completed deep dives so far:
 - Lamb of God
 
-This workflow exists because generic genre terms in Suno prompts aren't enough — specific technique descriptions (e.g., "dual guitar interplay with contrasting mid-heavy and scooped tones" vs just "groove metal") push Suno toward the right sound.
+This workflow exists because generic genre terms in Suno prompts aren't enough — specific technique descriptions (e.g., "dual guitar interplay with contrasting mid-heavy and scooped tones" vs just "groove metal") push Suno toward the right sound. Drum and vocal specifics are equally important for steering Suno away from default delivery and beat patterns.
 
 ## Interaction Patterns
 
