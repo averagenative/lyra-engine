@@ -81,6 +81,32 @@ If the user references an artist that isn't in `artists/`, offer to fetch them:
   ```
 - The `GENIUS_API_TOKEN` env var is required for fetch/enrich tools; read-only tools (browse, search, stats) work without it
 
+## Additional Research (Artist Deep Dives)
+
+Say `"additional research for [Artist]"` to trigger a deep instrumental/guitar research workflow. This goes beyond what's in the database and produces:
+
+1. **Guitar interplay** — how multiple guitarists interact (harmony, counterpoint, textural contrast)
+2. **Signature riff characteristics** — picking technique, palm muting, tuning, scales/modes, rhythmic patterns
+3. **Tone and gear** — amp voicing, EQ approach, gain structure, effects
+4. **Rhythm section integration** — how guitars lock with drums, kick synchronization
+5. **Vocal style details** — delivery, range, effects, section-by-section variation
+6. **Key song examples** showcasing each technique
+7. **Suno prompt translation** — all findings converted to Suno-safe descriptive language (no artist names), with recommended Weirdness, Style Influence, and Exclude Styles settings
+
+Results are saved to Claude memory as `reference_[artist]_guitar.md` so they compound across sessions. Completed deep dives so far:
+- Lamb of God
+
+This workflow exists because generic genre terms in Suno prompts aren't enough — specific technique descriptions (e.g., "dual guitar interplay with contrasting mid-heavy and scooped tones" vs just "groove metal") push Suno toward the right sound.
+
+## Interaction Patterns
+
+- **Adding artists**: `"add [Artist] to our local DB"` — fetches via `fetch.py artist`, reports results
+- **Batch adds**: Multiple artists can be requested at once and will be fetched in parallel
+- **Songwriting sessions**: Provide a theme/style/artist reference and get lyrics + Suno prompt + settings. Lyrics are optimized for Suno (syllable count, meter, hard consonants — see `guides/SUNO_PROMPT_GUIDE.md` for pitfalls)
+- **Suno prompts always include**: Style prompt text, Weirdness %, Style Influence %, Exclude Styles list
+- **Recurring themes**: Anti-imperialism, empire decline, historical power cycles are a consistent songwriting interest — draw from these proactively
+- **Style prompts must never contain artist names** — Suno strips them. Translate to descriptive language
+
 ## Conventions
 - Plain text lyrics, no HTML
 - One line per lyric line, blank line between sections
