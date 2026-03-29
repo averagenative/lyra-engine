@@ -54,6 +54,10 @@ Specialized agent definitions in `agents/`:
 - `guides/LYRICIST_GUIDE.md` — Style analysis, song design interview, blending instructions
 - `guides/SUNO_PROMPT_GUIDE.md` — Suno prompt rules, artist translations, meta-tags
 
+## Generated Songs (`songs/`)
+
+When you write lyrics, **always save them to `songs/`** as `{YYYY-MM-DD}-{song-slug}.md`. This directory is gitignored (personal per user). Each file has YAML frontmatter (`title`, `created_at`, `project`, `track_ref`, `style_influences`, `themes`, `vocal_style`) followed by plain-text lyrics with section headers in `[brackets]` and delivery notes in `(parentheses)`. This corpus enables pattern analysis — spotting reused words, overused phrases, and stylistic ruts.
+
 ## Conventions
 
 - Plain text lyrics, no HTML

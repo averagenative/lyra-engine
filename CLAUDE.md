@@ -11,6 +11,8 @@ A file-based lyrics and style reference engine in markdown, optimized for AI/age
     - `{YYYY} - {Album}/` — one dir per album
       - `_album.md` — album metadata + track listing
       - `{NN} - {Song}.md` — song file with frontmatter + lyrics
+- `songs/` — generated song lyrics (gitignored, personal per user)
+  - `{YYYY-MM-DD}-{song-slug}.md` — one file per generated song
 
 ## Navigating
 - To find all songs by an artist: read `artists/{Artist}/_artist.md` for the discography, then read any album dir.
@@ -59,7 +61,41 @@ If the user references an artist that isn't in `artists/`, offer to fetch them:
 2. Run the 7-question song design interview (see LYRICIST_GUIDE.md)
 3. Write lyrics with style constraints
 4. Generate Suno style prompt (see SUNO_PROMPT_GUIDE.md) — no artist names, under 180 words
-5. Paste into Suno, iterate
+5. **Save the generated song** to `songs/` (see below)
+6. Paste into Suno, iterate
+
+## Generated Songs (`songs/`)
+**When you write lyrics for a song, always save them to `songs/`.** This directory is gitignored (personal per user) and serves as a local corpus for pattern analysis — spotting reused words, overused phrases, and stylistic ruts across sessions.
+
+### File format
+- Filename: `{YYYY-MM-DD}-{song-slug}.md` (e.g., `2026-03-27-turkish-goodbye.md`)
+- YAML frontmatter + plain-text lyrics + style tags
+
+### Required frontmatter
+```yaml
+---
+title: Song Name
+created_at: YYYY-MM-DD
+project: Band/Project Name  # e.g., Twin Destroyer
+track_ref: "filename.wav"   # optional, reference to instrumental track
+style_influences:
+  - Artist Name             # artists whose style informed the lyrics
+themes:
+  - theme1
+  - theme2
+vocal_style: "full Suno vocal style tag string"
+---
+```
+
+### Body format
+Section headers in `[brackets]` with delivery notes in `(parentheses)`, then plain-text lyrics. One line per lyric line, blank line between sections. Include the vocal style tags at the bottom if not already in frontmatter.
+
+### Why this matters
+The corpus grows over time and enables:
+- Grepping for overused words/phrases across all generated songs
+- Tracking which style influences get used most
+- Spotting thematic repetition
+- Comparing vocal style tag evolution
 
 ## MCP Server
 - `python3 scripts/mcp_server.py` — run the MCP server (stdio transport)
@@ -107,6 +143,12 @@ Say `"additional research for [Artist]"` to trigger a deep research workflow cov
 
 Results are saved to Claude memory as `reference_[artist]_deep_dive.md` so they compound across sessions. Completed deep dives so far:
 - Lamb of God
+- Power Trip
+- Alice in Chains
+- Boy Harsher
+- Deftones
+- Spiritbox
+- Tool
 
 This workflow exists because generic genre terms in Suno prompts aren't enough — specific technique descriptions (e.g., "dual guitar interplay with contrasting mid-heavy and scooped tones" vs just "groove metal") push Suno toward the right sound. Drum and vocal specifics are equally important for steering Suno away from default delivery and beat patterns.
 

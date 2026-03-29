@@ -98,6 +98,12 @@ Since Suno strips artist names, use these sources to build descriptions:
 | Kublai Khan TX | aggressive beatdown hardcore with groove metal influence, breakdown-heavy, shouted vocals, crushing mid-tempo rhythms, raw pit energy |
 | Sanguisugabogg | lo-fi death metal, sludgy downtuned grooves, guttural vocals, caveman riffs, raw filthy production |
 | Portishead | dark trip-hop, melancholic downtempo, haunting female vocals, vinyl crackle textures, cinematic orchestral samples, sparse brooding atmosphere |
+| Mudvayne (L.D. 50) | early-2000s technical progressive metal with jazz-fusion bass, downtuned angular staccato riffs, prominent slap-and-tap bass as lead instrument, polyrhythmic odd-time drumming with jazz ghost notes, violent shifts between guttural screams and melodic singing, mathematical rhythmic complexity, tight compressed production |
+| Mudvayne (The End of All Things to Come) | dark atmospheric progressive metal, jazz-influenced bass, spacious quiet verses building to crushing downtuned heaviness, angular dissonant riffs over polyrhythmic odd-time drums, wide dynamic vocal range from haunting melodies to guttural screams, mathematical precision |
+| Slipknot (self-titled/Iowa era) | late-90s extreme groove metal, heavily downtuned dual-guitar palm-muted chugging over relentless double bass drums, layered multi-percussion assault with industrial found-object hits, turntable scratches and horror-noise samples, raw analog production, harsh screamed vocals alternating with guttural growls, suffocating wall-of-sound density |
+| Slipknot (Vol. 3/All Hope Is Gone era) | mid-2000s heavy groove metal with melodic hooks, thick downtuned drop-B guitar riffs with dissonant lead lines, aggressive double-kick drumming over polyrhythmic auxiliary percussion, harsh screamed verses building to anthemic melodic choruses, polished compressed production, turntable textures and atmospheric sampling |
+| Slipknot (We Are Not Your Kind era) | modern atmospheric heavy metal, angular dissonant guitar riffs over pounding groove-metal rhythms, electronic textures and glitch samples layered into dense metal production, dynamic shifts between spacious dark verses and crushing walls of distortion, extreme vocal range from whispered menace to guttural screams to soaring melodies |
+| Mudvayne (Lost and Found) | heavy groove metal with technical progressive bass, downtuned palm-muted chugging, aggressive slap bass driving rhythm, polyrhythmic drumming, assertive male vocals alternating fierce screams and confident melody |
 
 ## Meta-Tag Categories
 
@@ -225,6 +231,146 @@ These patterns were discovered through extensive trial and error generating groo
 ### Example: Working Extreme Groove Metal Prompt
 
 > Extreme low-tuned 8-string groove metal. Polyrhythmic palm-muted chugging, mechanical double bass drums, dissonant angular guitar riffs. Harsh screamed male vocals, guttural and abrasive throughout. No melody, no clean singing, no rap, no spoken word. Industrial percussion hits. Claustrophobic wall-of-sound production. Mathematical rhythmic complexity. Mid-tempo crushing heaviness. Diminished minor key. 105-115 BPM.
+
+## Artist Deep Dive: Slipknot-Style Prompt Engineering
+
+Slipknot is one of the hardest bands to translate into Suno prompts because of their unique instrumentation (nine members), vocal diversity, and the fact that obvious descriptors like "nine-piece chaotic energy" trigger nu-metal rap-rock in Suno rather than the intended heavy groove metal. This section documents their signature techniques and how to translate each into Suno-safe language.
+
+### Guitar: Dual-Guitar Dynamic
+
+**Mick Thomson (#7) — Rhythm/Low-End**
+- Death metal roots (played in Body Pit with Paul Gray; influenced by Internal Bleeding, Morbid Angel)
+- Primary tuning: Drop B (B-F#-B-E-G#-C#) across most of their discography
+- Signature technique: heavy palm-muted chugging, percussive staccato riffing, repetitive groove-locked patterns
+- Gear evolution: B.C. Rich Warlocks with dual EMG humbuckers -> Ibanez MTM with Seymour Duncan EMTY Blackout pickups -> Jackson Double Rhoads/Soloist -> ESP with Fishman pickups
+- Effects: Maxon OD820 overdrive, Death by Audio Fuzz War, MXR Carbon Copy delay, Electro-Harmonix Bassballs envelope filter
+- Strings: d'Addario EXL117 (medium-top/extra-heavy-bottom, built for drop tuning)
+
+**Jim Root (#4) — Lead/Atmospheric**
+- Unusual for metal: plays Fender signature Telecaster, Jazzmaster, and Stratocaster models (single-humbucker configurations)
+- Amps: Orange Rockerverb heads live; Bogner Uberschall and Mesa Boogie Mark IIC in studio
+- EMG Retroactive pickups (later signature set)
+- Provides higher-register melodic leads, dissonant textures, and atmospheric guitar layers
+- Introduced guitar solos and acoustic passages starting on Vol. 3 (2004)
+- Described his role: "In both bands, I fulfill both roles... Mick has some solos" — twin-guitar interplay rather than strict rhythm/lead split
+
+**Suno translation**: "heavily downtuned drop-B dual-guitar attack, percussive palm-muted chugging locked to the kick drums, dissonant angular lead lines over crushing low-end riffs" — avoid "twin guitar harmonies" (triggers Iron Maiden-style melodic metal)
+
+### Percussion: The Three-Percussionist Wall
+
+**Joey Jordison (#1) / Jay Weinberg / Eloy Casagrande — Drums**
+- Jordison: self-taught, then trained in R&B and jazz technique (credited this for his musical diversity)
+- Blast beats, rapid double bass drum patterns, death metal speed combined with groove-metal pocket
+- Rolling Stone described the combined percussion as "suffocating"
+
+**Shawn "Clown" Crahan (#6) — Custom Percussion**
+- Hits custom keg drums, metal barrels, baseball bats on industrial objects
+- Creates non-pitched, industrial-sounding percussive accents
+
+**Chris Fehn (#3) / Michael Pfaff — Custom Percussion**
+- Additional layer of auxiliary percussion reinforcing Crahan's industrial hits
+- Concert toms, modified drums, found-object percussion
+
+**Combined effect**: Three simultaneous percussion sources create a dense rhythmic wall — conventional kit drumming (double bass, blast beats) layered with non-pitched industrial strikes and auxiliary tom patterns. This is the signature that makes Slipknot sound "bigger" than a standard metal band.
+
+**Suno translation**: "relentless double bass drums under layered industrial percussion hits, metallic found-object strikes reinforcing the beat, dense polyrhythmic drum assault" — do NOT use "tribal percussion" (triggers Soulfly world-music) or "nine-piece chaotic energy" (triggers rap-rock)
+
+### DJ/Sampler Elements
+
+**Sid Wilson (#0) — Turntables/Keys**
+- Contributes scratching, horror-like noise, sound effects, background textures
+- Also a jungle/drum-and-bass DJ (solo career as DJ Starscream)
+- Role evolved from prominent turntable scratches (self-titled, Iowa) to more integrated electronic textures (later albums)
+
+**Craig Jones (#5) — Sampling/Keyboards**
+- Programmed samples, atmospheric pads, noise elements
+- Less visible but provides the electronic "glue" between sections
+
+**Suno translation**: "turntable scratch accents and horror-noise samples woven into heavy guitars" (for early era) or "electronic textures and glitch samples layered into dense metal production" (for later era) — avoid "DJ" alone (triggers hip-hop)
+
+### Vocal Style: Corey Taylor's Range
+
+Taylor deploys at least five distinct vocal modes, often within the same song:
+
+| Mode | Description | Song Examples | Suno Trigger Risk |
+|------|-------------|---------------|-------------------|
+| **Guttural death growl** | Low, guttural, sub-bass vocal register | "People = Shit" verses, "Disasterpiece" | Low risk — Suno handles growls well |
+| **High-pitched scream** | Strained, aggressive, mid-to-high range | "(sic)", "Heretic Anthem", "Eyeless" | Low risk with "harsh screamed vocals" |
+| **Melodic clean singing** | Full-voiced, anthemic, rock tenor | "Duality" chorus, "Vermilion Pt. 2", "Snuff", "Dead Memories" | HIGH RISK — Suno over-indexes on melody and goes radio-rock |
+| **Spoken word/menacing** | Whispered or spoken, building tension | "Iowa" (title track), "Gently" intro | Medium risk — can trigger spoken-word poetry delivery |
+| **Rap cadence** | Rhythmic, hip-hop-influenced delivery | "Spit It Out", early tracks | HIGH RISK — Suno will latch onto this and go full rap-rock |
+
+**Suno translation for aggressive tracks**: "harsh screamed male vocals, guttural and abrasive, with occasional anthemic melodic breaks" — the key is making clean singing the exception, not the rule. For mixed vocal tracks, specify "predominantly harsh screamed vocals with brief melodic chorus hooks" to prevent Suno from defaulting to singing throughout.
+
+**Suno translation for melodic tracks** (Duality, Vermilion, Snuff type): "aggressive alternative metal vocals alternating between strained melodic singing and harsh screams, emotionally raw delivery"
+
+### Tone and Production Evolution
+
+| Album | Year | Producer | Sonic Character |
+|-------|------|----------|-----------------|
+| **Slipknot** | 1999 | Ross Robinson | Raw, chaotic, live-feel. Drums recorded in 3 days. Entire album mixed on analog equipment (month-long mix of "Purity" alone). Robinson cut experimental sections for straightforward metal attack. Dense percussion/turntable/sample layering. |
+| **Iowa** | 2001 | Ross Robinson | Darker, more technical. Robinson captured precision over raw energy. Death metal influence increased. NME: "every possible space covered in scrawl and cymbals: guitars, percussion, electronic squall, subhuman screaming." Less hip-hop, more extreme metal. 15-minute title track. |
+| **Vol. 3** | 2004 | Rick Rubin | First melodic structures, guitar solos, acoustic instruments. Polished production. "Differing textures." BBC: "hyperactive bass drums, complex compelling riffs, ridiculously fast fretwork." Rolling Stone: "newer extremes... tunefulness and traditional song structures." |
+| **All Hope Is Gone** | 2008 | Dave Fortman | Most eclectic. Full groove metal with death metal and thrash elements. All nine members writing. Taylor+Root+Wilson+Crahan worked on "oblique, arty pieces." Band members later criticized it as rushed. Mixed by Colin Richardson. |
+| **We Are Not Your Kind** | 2019 | Greg Fidelman | Atmospheric, experimental. Angular dissonance. Electronic textures more integrated. Dynamic range from spacious to crushing. |
+
+**Key production insight for Suno**: The Ross Robinson era (1999-2001) is best translated as "raw analog production, claustrophobic wall-of-sound density, every frequency saturated." The Rubin and later era is "polished compressed production with dynamic contrast between sparse and dense sections."
+
+### Key Song Technical Breakdowns
+
+**"Wait and Bleed" (1999)** — Drop B, 165 BPM. Melodic chorus hook over aggressive verses. Taylor's first showcase of scream-to-melody range. Fast double bass under relatively simple riff structure. The song that proved Slipknot could write hooks. *Suno approach*: aggressive alternative metal, fast tempo, harsh verses with melodic chorus breaks.
+
+**"(sic)" (1999)** — Drop B, staccato palm-muted riff locked to kick drum. Turntable scratches prominent. Pure aggression, no clean vocals. Repetitive hypnotic groove. *Suno approach*: repetitive downtuned groove metal, turntable scratch accents, harsh vocals throughout.
+
+**"People = Shit" (2001)** — Drop B, blast beat intro, death metal intensity. MusicBrainz tags include death metal, deathgrind. Relentless double bass, layered percussion. Taylor at most aggressive. *Suno approach*: extreme groove metal bordering on death metal, blast beats, guttural screamed vocals, industrial percussion hits.
+
+**"Disasterpiece" (2001)** — Drop B, Grammy-winning. Opens with Taylor screaming "I wanna slit your throat and fuck the wound." Maximum density — all nine members at full volume. Death metal influence most apparent. *Suno approach*: extreme downtuned metal, suffocating layered percussion, harsh guttural vocals, claustrophobic production.
+
+**"Duality" (2004)** — Drop B, 135 BPM. Anthemic verse-chorus structure with melodic hook ("I push my fingers into my eyes"). Heavy palm-muted verse riff, open melodic chorus. First big Slipknot "single" with traditional song structure. *Suno approach*: heavy alternative metal with anthemic melodic choruses, downtuned chugging verses building to emotional hooks, harsh-to-clean vocal dynamics.
+
+**"Before I Forget" (2004)** — Drop B, groove-locked riff, melodic chorus. Grammy for Best Metal Performance. Demonstrates the Pantera-influenced groove hallmark. *Suno approach*: mid-tempo groove metal, thick rhythmic palm-muted riff, melodic singing over heavy instrumentation.
+
+**"Psychosocial" (2008)** — Drop B, groove metal anthem. Staccato riff, gang-vocal chant chorus. MusicBrainz: groove metal, rhythmic. Thrash metal guitar work with melodic vocal hooks. *Suno approach*: driving groove metal, rhythmic staccato guitar riffs, shouted group vocal hooks over double-kick drumming.
+
+**"Sulfur" (2008)** — Written by Jordison and Root in one evening. Melodic lead guitar over heavy rhythm section. Clean singing prominent. *Suno approach*: atmospheric heavy metal, melodic guitar leads over crushing rhythm section, strained emotional singing with harsh screamed bridges.
+
+**"The Devil in I" (2014)** — Post-Gray/Jordison era. Mature songwriting, atmospheric intro building to heavy groove. Dynamic range. *Suno approach*: dark atmospheric groove metal, spacious intro building to crushing mid-tempo heaviness, emotionally strained vocals.
+
+### Suno Prompt Templates
+
+**Template: Early Slipknot (Self-Titled/Iowa) — Pure Aggression**
+
+> Extreme downtuned groove metal. Percussive palm-muted drop-B guitar chugging locked to relentless double bass drums, layered industrial percussion hits and metallic strikes reinforcing every beat. Harsh screamed male vocals, guttural and unrelenting. Turntable scratch accents and horror-noise samples. Raw analog claustrophobic wall-of-sound production. No clean singing, no melody, no rap. 130-170 BPM.
+
+- **Weirdness**: 45-55%
+- **Style Influence**: 70-80%
+- **Exclude**: pop rock, radio rock, melodic, clean vocals, rap, hip-hop, spoken word
+
+**Template: Mid-Era Slipknot (Vol. 3/All Hope Is Gone) — Groove + Melody**
+
+> Heavy groove metal with anthemic hooks. Thick downtuned dual-guitar palm-muted chugging over pounding double-kick drums and layered auxiliary percussion. Harsh screamed verses building to strained melodic choruses with emotional intensity. Polished compressed production with dense layered instrumentation. Electronic textures and turntable accents woven into heavy guitars. 120-140 BPM.
+
+- **Weirdness**: 35-45%
+- **Style Influence**: 60-70%
+- **Exclude**: pop rock, radio rock, arena rock, rap, hip-hop, acoustic, folk
+
+**Template: Late Slipknot (WANYK/TESF) — Atmospheric + Heavy**
+
+> Dark atmospheric groove metal with experimental electronic textures. Angular dissonant guitar riffs over pounding mid-tempo drums, glitch samples and ambient noise layered into crushing distorted guitars. Wide dynamic shifts from spacious menacing verses to suffocating walls of sound. Harsh screamed vocals alternating with strained emotional melodies. Modern compressed production. 110-130 BPM.
+
+- **Weirdness**: 50-60%
+- **Style Influence**: 65-75%
+- **Exclude**: pop rock, radio rock, arena rock, nu-metal rap-rock, clean production, bright
+
+### Critical Suno Pitfalls for Slipknot-Style
+
+- **"Nine-piece chaotic energy"** -> triggers nu-metal rap-rock. Use "layered industrial percussion hits reinforcing double-kick drums" instead
+- **"Chaotic" alone** -> Suno reads as "messy/unstructured" rather than "dense/intense." Use "suffocating" or "claustrophobic" or "dense wall-of-sound"
+- **"Turntablist"** -> triggers hip-hop. Use "turntable scratch accents" or "electronic noise textures"
+- **"Percussion ensemble"** -> triggers world music. Use "layered industrial percussion" or "metallic found-object strikes"
+- **"Dual vocals"** -> Suno may add a second vocalist. Use "harsh screamed vocals with occasional melodic breaks" for one singer doing both
+- **"Groove metal"** alone works well but may land closer to Pantera/Lamb of God than Slipknot — add "layered industrial percussion" and "electronic textures" to differentiate
+- **"Alternative metal"** alone -> too vague, can trigger Deftones-style shoegaze or RHCP funk-metal. Pair with "groove metal" and specific instrumentation
 
 ## Suno Generation Settings
 
